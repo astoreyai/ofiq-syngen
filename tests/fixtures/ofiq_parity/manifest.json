@@ -1,0 +1,11 @@
+{
+  "schema_version": "1",
+  "ofiq_version": "1.1.0",
+  "syngen_version": "0.3.0",
+  "tolerance": 5.0,
+  "tolerance_units": "raw OFIQ score (0-100)",
+  "generated_at": null,
+  "generator_script": "scripts/regenerate_parity_vectors.py",
+  "image_set": [],
+  "vectors": []
+}

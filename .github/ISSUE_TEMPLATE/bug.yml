@@ -1,0 +1,50 @@
+name: Bug report
+description: A degrader, test, or CLI command behaves wrong.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: ofiq-syngen version
+      placeholder: 0.3.0
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: 3.11.7
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Minimal command or code snippet.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: What actually happened (paste full traceback if applicable).
+    validations:
+      required: true
+  - type: dropdown
+    id: ofiq_models
+    attributes:
+      label: OFIQ models available?
+      options:
+        - "Yes, GPU"
+        - "Yes, CPU only"
+        - "No (mock fallback only)"
+    validations:
+      required: true

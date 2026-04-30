@@ -1,0 +1,72 @@
+site_name: ofiq-syngen
+site_description: ISO/IEC 29794-5 component-aligned synthetic face image quality degradation
+site_url: https://astoreyai.github.io/ofiq-syngen
+repo_url: https://github.com/astoreyai/ofiq-syngen
+repo_name: astoreyai/ofiq-syngen
+edit_uri: edit/main/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+
+nav:
+  - Home: README.md
+  - Usage: USAGE.md
+  - Citing: docs/CITING.md
+  - Theory:
+      - Overview: docs/theory/index.md
+      - Per-component status: docs/theory/COMPONENT_STATUS.md
+      - Algorithmic analysis: ANALYSIS.md
+  - Standards:
+      - Multi-standard mapping: docs/standards/MAPPING.md
+      - OFIQ source provenance: docs/standards/PROVENANCE.md
+      - Sources and pinning: docs/standards/SOURCES.md
+  - Project:
+      - Contributing: CONTRIBUTING.md
+      - OFIQ upstream policy: OFIQ_UPSTREAM.md
+      - Code of Conduct: CODE_OF_CONDUCT.md
+      - Changelog: CHANGELOG.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: false
+            show_root_heading: true
+            members_order: source
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+docs_dir: .
+exclude_docs: |
+  src/
+  tests/
+  build/
+  dist/
+  examples/captures/
+  __pycache__/

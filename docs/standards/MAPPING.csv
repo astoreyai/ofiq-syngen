@@ -1,0 +1,29 @@
+ofiq_syngen_component,ofiq_section,iso_29794_5_aspect,iso_19794_5_clause,icao_9303_part9_clause,alignment,confidence,notes
+BackgroundUniformity.scalar,S6.1,Background uniformity (capture),§8.9 (lighting/scene),§3.2.3 (background),exact,verified,ICAO requires plain uniform background
+IlluminationUniformity.scalar,S6.2,Illumination uniformity (capture),§8.9 (lighting),§3.2.3 (lighting),exact,verified,Both standards require even left/right illumination
+LuminanceMean.scalar,S6.3,Luminance mean (capture),§8.9 (exposure),§3.2.3 (exposure),exact,verified,Photo not too dark/light
+LuminanceVariance.scalar,S6.3,Luminance variance (capture),§8.9 (exposure),§3.2.3 (contrast),partial,verified,29794-5 measures variance; 19794-5 informal
+UnderExposurePrevention.scalar,S6.4,Under-exposure prevention,§8.9 (exposure),§3.2.3 (exposure),exact,verified,Black-clipping prevention
+OverExposurePrevention.scalar,S6.4,Over-exposure prevention,§8.9 (exposure),§3.2.3 (exposure),exact,verified,Clipped-whites prevention
+DynamicRange.scalar,S6.5,Dynamic range,§8.9 (lighting),§3.2.3 (contrast),partial,verified,29794-5 uses entropy; 19794-5 prose
+Sharpness.scalar,S6.6,Sharpness (focus),§8.10 (focus),§3.2.3 (focus),exact,verified,In-focus subject required by all three
+CompressionArtifacts.scalar,S6.7,Compression artifacts,§9.2 (JPEG/JPEG2000),§3.2.5 (compression),exact,verified,ICAO bans visible compression artifacts
+NaturalColour.scalar,S6.8,Natural colour,§9.1 (colour space),§3.2.4 (true colour),exact,verified,Skin tone within natural range
+RadialDistortion.scalar,S6.9,Radial/lens distortion,§8.10 (lens),§3.2.3 (lens distortion),exact,verified,Forward-looking 29794-5 component; ICAO mentions in §3.2 informative
+EyesOpen.scalar,S7.2,Eyes open,§8.5 (eye state),§3.2.3 (eyes open),exact,verified,All three require open eyes for token photos
+MouthClosed.scalar,S7.3,Mouth closed,§8.6 (mouth state),§3.2.3 (mouth closed),exact,verified,All three require closed mouth
+EyesVisible.scalar,S7.4,Eyes visible (no occlusion),§8.7 (eye occlusion),§3.2.3 (no eye covering),exact,verified,No sunglasses; tinted glasses restricted
+MouthOcclusionPrevention.scalar,S7.5,Mouth visible,§8.7 (mouth occlusion),§3.2.3 (no mouth covering),exact,verified,Hand/mask/face-covering bans
+FaceOcclusionPrevention.scalar,S7.6,Face visible,§8.7 (face occlusion),§3.2.3 (face visible),exact,verified,No occluding hair/objects
+InterEyeDistance.scalar,S7.7,Inter-eye distance,§9.3 (resolution),§3.2.2 (eye distance min),exact,verified,ICAO: IED >= 90 px (eMRTD); 19794-5 same
+HeadSize.scalar,S7.8,Head size in frame,§7.4 (Token formats),§3.2.2 (face size),exact,verified,Token formats specify head proportion
+HeadPoseYaw.scalar,S8,Yaw,§8.2 (pose),§3.2.3 (frontal),exact,verified,All require near-frontal pose (<= +/-5 deg ICAO)
+HeadPosePitch.scalar,S8,Pitch,§8.2 (pose),§3.2.3 (frontal),exact,verified,Same frontality requirement
+HeadPoseRoll.scalar,S8,Roll,§8.2 (pose),§3.2.3 (frontal),exact,verified,In-plane roll bounded
+LeftwardCropOfTheFaceImage.scalar,S8,Left margin,§7.4 (Token formats),§3.2.2 (centring),exact,verified,Centred face required
+RightwardCropOfTheFaceImage.scalar,S8,Right margin,§7.4 (Token formats),§3.2.2 (centring),exact,verified,Centred face required
+MarginAboveOfTheFaceImage.scalar,S8,Top margin,§7.4 (Token formats),§3.2.2 (head position),exact,verified,Top-of-head distance specified
+MarginBelowOfTheFaceImage.scalar,S8,Bottom margin,§7.4 (Token formats),§3.2.2 (head position),exact,verified,Chin-to-bottom distance specified
+SingleFacePresent.scalar,S6,Single face present,§8.1 (subject),§3.2.3 (one subject),exact,uncertain,Section number in 29794-5 unverified; one-subject requirement universal
+ExpressionNeutrality.scalar,S7.9,Neutral expression,§8.3 (expression),§3.2.3 (neutral expression),exact,uncertain,ICAO: neutral expression with mouth closed; clause exact
+NoHeadCoverings.scalar,S7.10,No head coverings,§8.8 (head coverings),§3.2.3 (head coverings),partial,uncertain,Religious/medical exemptions in ICAO; not in OFIQ

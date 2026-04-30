@@ -1,0 +1,37 @@
+# Build / package
+build/
+dist/
+*.egg-info/
+*.egg
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test caches
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Local artifacts
+captures/
+docs/gallery/canonical.png
+docs/gallery/images/
+benchmarks/results/grid.parquet
+benchmarks/results/grid.json
+benchmarks/results/crosstalk.csv
+benchmarks/results/monotonicity.csv
+tests/fixtures/ofiq_parity/images/
+
+# Environments / IDE
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db

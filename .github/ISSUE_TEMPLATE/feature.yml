@@ -1,0 +1,33 @@
+name: Feature request
+description: A new degrader, CLI flag, or workflow.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Best home for this
+      options:
+        - "ofiq-syngen (this repo)"
+        - "OFIQ-Project upstream (BSI)"
+        - "Downstream tool (your own)"
+        - "Not sure"
+    validations:
+      required: true

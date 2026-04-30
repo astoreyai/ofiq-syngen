@@ -1,0 +1,37 @@
+name: Standards alignment
+description: A clause reference, OFIQ source citation, or alignment classification looks wrong.
+labels: [standards]
+body:
+  - type: dropdown
+    id: standard
+    attributes:
+      label: Which standard
+      options:
+        - "ISO/IEC 29794-5:2024"
+        - "ISO/IEC 19794-5:2011"
+        - "ICAO Doc 9303 Part 9"
+        - "OFIQ Algorithm Book"
+        - "OFIQ source code"
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: Component name
+      placeholder: BackgroundUniformity.scalar
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current claim in the package
+      description: Paste the relevant row from MAPPING.csv, MAPPING.md, PROVENANCE.md, or standards.py.
+    validations:
+      required: true
+  - type: textarea
+    id: correct
+    attributes:
+      label: What the standard / source actually says
+      description: Quote the clause text or source line range. Cite the document edition.
+    validations:
+      required: true

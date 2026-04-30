@@ -1,0 +1,71 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ofiq-syngen"
+version = "0.2.0"
+description = "ISO/IEC 29794-5 component-aligned synthetic face image quality degradation pipeline"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "Aaron Storey", email = "aaron@astoreyai.com" },
+]
+keywords = [
+    "biometrics",
+    "face-quality",
+    "OFIQ",
+    "ISO-29794-5",
+    "degradation",
+    "synthetic-data",
+    "face-recognition",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "opencv-python-headless>=4.5",
+    "numpy>=1.21",
+    "onnxruntime>=1.14",
+    "scipy>=1.7",
+]
+
+[project.optional-dependencies]
+gpu = ["onnxruntime-gpu>=1.14"]
+pandas = ["pandas>=1.3"]
+generative = [
+    "insightface>=0.7",
+    "diffusers>=0.25",
+    "torch>=2.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pandas>=1.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/astoreyai/ofiq-syngen"
+Documentation = "https://github.com/astoreyai/ofiq-syngen#readme"
+Repository = "https://github.com/astoreyai/ofiq-syngen"
+Issues = "https://github.com/astoreyai/ofiq-syngen/issues"
+
+[project.scripts]
+ofiq-syngen = "ofiq_syngen.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ofiq_syngen"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

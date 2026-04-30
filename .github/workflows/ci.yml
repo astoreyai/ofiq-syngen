@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,pandas]"
+      - name: Test
+        run: pytest tests/ -v --tb=short
+      - name: Lint
+        if: matrix.python-version == '3.11'
+        run: |
+          pip install ruff
+          ruff check src/ tests/ examples/
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build wheel and sdist
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Verify install from wheel
+        run: |
+          pip install dist/*.whl
+          python -c "import ofiq_syngen; print(ofiq_syngen.__version__)"
+          ofiq-syngen --version
+          ofiq-syngen list-components | head -5
+          ofiq-syngen show-standards --preset icao-strict | head -5
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/

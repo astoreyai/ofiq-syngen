@@ -1,0 +1,60 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it together with the OFIQ reference paper and the underlying ISO standard. See docs/CITING.md."
+title: "ofiq-syngen: ISO/IEC 29794-5 component-aligned synthetic face image quality degradation"
+abstract: >-
+  ofiq-syngen generates controlled, OFIQ-aligned synthetic face image
+  degradations targeting the 28 ISO/IEC 29794-5 quality components. Each
+  perturbation operates on the same image regions OFIQ measures, with
+  multi-standard cross-references to ISO/IEC 19794-5 and ICAO Doc 9303
+  Part 9. Designed as the canonical synthetic-degradation companion to
+  the BSI OFIQ reference implementation.
+authors:
+  - family-names: Storey
+    given-names: Aaron W.
+    email: aaron@astoreyai.com
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+    affiliation: "Clarkson University"
+version: 0.3.0
+date-released: "2026-04-29"
+license: MIT
+repository-code: "https://github.com/astoreyai/ofiq-syngen"
+url: "https://github.com/astoreyai/ofiq-syngen"
+keywords:
+  - biometrics
+  - face image quality
+  - OFIQ
+  - ISO/IEC 29794-5
+  - ISO/IEC 19794-5
+  - ICAO 9303
+  - synthetic degradation
+  - face recognition
+references:
+  - type: article
+    authors:
+      - family-names: Schlett
+        given-names: Torsten
+      - family-names: Damer
+        given-names: Naser
+    title: "OFIQ: an open-source software library for face image quality assessment"
+    year: 2024
+    conference:
+      name: "IEEE International Joint Conference on Biometrics (IJCB)"
+    notes: "Reference implementation cited for algorithm provenance. Verify exact citation at https://www.bsi.bund.de/OFIQ before publication."
+  - type: standard
+    title: "Information technology -- Biometric sample quality -- Part 5: Face image data"
+    year: 2024
+    institution:
+      name: "ISO/IEC JTC 1/SC 37"
+    notes: "ISO/IEC 29794-5:2024."
+  - type: standard
+    title: "Information technology -- Biometric data interchange formats -- Part 5: Face image data"
+    year: 2011
+    institution:
+      name: "ISO/IEC JTC 1/SC 37"
+    notes: "ISO/IEC 19794-5:2011 plus Amd 1:2014, Amd 2:2014."
+  - type: standard
+    title: "Machine Readable Travel Documents -- Part 9: Deployment of Biometric Identification and Electronic Storage of Data in MRTDs"
+    year: 2021
+    institution:
+      name: "International Civil Aviation Organization"
+    notes: "ICAO Doc 9303 Part 9, 8th edition."
