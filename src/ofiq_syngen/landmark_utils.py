@@ -315,8 +315,8 @@ def get_face_mask(
     # Clip to image bounds
     src_top = max(0, -b)
     src_left = max(0, -a)
-    src_bottom = min(mask_rescaled.shape[0], mask_rescaled.shape[0] - max(0, d - height))
-    src_right = min(mask_rescaled.shape[1], mask_rescaled.shape[1] - max(0, c - width))
+    min(mask_rescaled.shape[0], mask_rescaled.shape[0] - max(0, d - height))
+    min(mask_rescaled.shape[1], mask_rescaled.shape[1] - max(0, c - width))
 
     dst_top = max(0, b)
     dst_left = max(0, a)

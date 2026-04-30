@@ -69,3 +69,21 @@ packages = ["src/ofiq_syngen"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+# E702: compound statements on one line (intentional in pose-math one-liners)
+# E741: ambiguous variable name (l/r/t/b is universally read as left/right/top/bottom)
+ignore = ["E702", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+# pandas typed as a forward-string annotation in score_directory; pandas
+# is an optional runtime dependency, not an import-time requirement
+"src/ofiq_syngen/gpu_ofiq_scorer.py" = ["F821"]
+# Generative imports placed mid-module so the registration block (which
+# wraps them in _register calls) groups together by OFIQ section rather
+# than collecting all imports at the top
+"src/ofiq_syngen/components.py" = ["E402"]

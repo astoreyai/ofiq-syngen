@@ -15,15 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import cv2
 import numpy as np
 
-from ofiq_syngen.landmark_utils import (
-    BISENET_CLOTH,
-    BISENET_HAT,
-    BISENET_HAIR,
-    BISENET_SKIN,
-)
 
 if TYPE_CHECKING:
     from ofiq_syngen.face_context import FaceContext

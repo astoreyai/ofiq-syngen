@@ -17,13 +17,11 @@ import sys
 from pathlib import Path
 
 import cv2
-import numpy as np
 
 from ofiq_syngen import __version__
 from ofiq_syngen.components import (
     COMPONENT_REGISTRY,
     list_all_degradations,
-    list_supported_components,
 )
 from ofiq_syngen.pipeline import DegradationConfig, DegradationPipeline
 from ofiq_syngen.standards import (

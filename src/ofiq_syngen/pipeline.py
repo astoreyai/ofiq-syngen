@@ -26,7 +26,6 @@ import numpy as np
 
 from ofiq_syngen.components import (
     COMPONENT_REGISTRY,
-    ComponentDegradation,
     list_supported_components,
 )
 

@@ -20,18 +20,9 @@ from scipy.interpolate import RBFInterpolator
 
 from ofiq_syngen.landmark_utils import (
     BISENET_BACKGROUND,
-    BISENET_CLOTH,
-    BISENET_HAT,
-    LEFT_EYE,
-    LEFT_EYE_CORNERS,
-    MOUTH_INNER,
     MOUTH_OUTER,
     PAIRS_LEFT_EYE,
-    PAIRS_MOUTH_INNER,
     PAIRS_RIGHT_EYE,
-    RIGHT_EYE,
-    RIGHT_EYE_CORNERS,
-    convert_bgr_to_cielab,
 )
 from ofiq_syngen.standards import STANDARDS_REFS, StandardRefs
 
@@ -97,7 +88,7 @@ def _background_clutter_segmented(
         idx = rng.randint(0, len(bg_coords))
         cy, cx = bg_coords[idx]
         patch_size = rng.randint(3, max(4, int(severity * 40)))
-        color = rng.randint(0, 256, 3).tolist()
+        rng.randint(0, 256, 3).tolist()
 
         y1, y2 = max(0, cy - patch_size // 2), min(h, cy + patch_size // 2)
         x1, x2 = max(0, cx - patch_size // 2), min(w, cx + patch_size // 2)

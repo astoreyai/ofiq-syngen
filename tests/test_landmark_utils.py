@@ -8,8 +8,6 @@ import pytest
 from ofiq_syngen.landmark_utils import (
     LEFT_EYE,
     RIGHT_EYE,
-    LEFT_EYE_CORNERS,
-    RIGHT_EYE_CORNERS,
     MOUTH_OUTER,
     MOUTH_INNER,
     CONTOUR,

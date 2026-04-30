@@ -33,15 +33,10 @@ from ofiq_syngen.landmark_utils import (
     BISENET_BACKGROUND,
     BISENET_CLOTH,
     BISENET_HAT,
-    LEFT_EYE,
-    LEFT_EYE_CORNERS,
-    MOUTH_INNER,
     MOUTH_OUTER,
     PAIRS_LEFT_EYE,
     PAIRS_MOUTH_INNER,
     PAIRS_RIGHT_EYE,
-    RIGHT_EYE,
-    RIGHT_EYE_CORNERS,
     calculate_eye_centers,
     calculate_reference_points,
     calculate_roi,
@@ -51,7 +46,6 @@ from ofiq_syngen.landmark_utils import (
     get_face_mask,
     get_luminance_image,
     get_max_pair_distance,
-    get_middle,
     inter_eye_distance,
     tmetric,
 )
@@ -163,7 +157,8 @@ class GPUOFIQScorer:
         rtree_path = model_dir / "sharpness/face_sharpness_rtree.xml.gz"
         if rtree_path.exists():
             try:
-                import gzip, tempfile
+                import gzip
+                import tempfile
                 with gzip.open(rtree_path, "rb") as f:
                     xml_data = f.read()
                 # Use unique temp file per process to avoid race conditions

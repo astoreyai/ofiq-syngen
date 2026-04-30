@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 from threading import Lock
 
-import numpy as np
 
 try:
     import onnxruntime as ort
