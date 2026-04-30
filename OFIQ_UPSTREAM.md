@@ -105,7 +105,7 @@ are easier to land than new features.
 
 Any reciprocity is one-way until OFIQ ships new functionality that
 references `ofiq-syngen`. We cite OFIQ unconditionally (see
-[`docs/CITING.md`](docs/CITING.md)). If you publish work using both
+[`docs/CITING.md`](https://github.com/astoreyai/ofiq-syngen/blob/main/docs/CITING.md)). If you publish work using both
 projects, citing both is the right thing to do.
 
 ## Contact

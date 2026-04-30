@@ -374,7 +374,7 @@ ofiq-syngen generate-dataset -i ./faces -o ./icao_dataset --preset icao-strict
 passing both returns a non-zero exit with a clear error.
 
 Preset definitions live in `src/ofiq_syngen/standards.py` and trace back
-to [`docs/standards/MAPPING.csv`](docs/standards/MAPPING.csv). The
+to [`docs/standards/MAPPING.csv`](https://github.com/astoreyai/ofiq-syngen/blob/main/docs/standards/MAPPING.csv). The
 machine-readable CSV is the source of truth; `standards.py` ships the
 same data as a Python dict so the package wheel needs no file-resource
 handling. The test suite asserts the two stay in sync.
@@ -410,7 +410,7 @@ the full `standard_refs` field for in-pipeline access.
 ## OFIQ source provenance
 
 Every degradation function cites the OFIQ-Project C++ `Execute()` line
-range it was ported from. See [`docs/standards/PROVENANCE.md`](docs/standards/PROVENANCE.md)
+range it was ported from. See [`docs/standards/PROVENANCE.md`](https://github.com/astoreyai/ofiq-syngen/blob/main/docs/standards/PROVENANCE.md)
 for the full per-component table plus helper-utility ports
 (`landmark_utils`, `image_utils`, `face_context`).
 

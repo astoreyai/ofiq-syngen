@@ -1,8 +1,8 @@
 name: Docs
 
 on:
-  # Manual trigger only until docs_dir restructure (mkdocs strict-mode requires
-  # docs to live in a child directory, not the package root). See issue #1.
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
       - name: Install docs dependencies
         run: |
           pip install -e .
-          pip install mkdocs mkdocs-material mkdocstrings[python]
+          pip install mkdocs mkdocs-material mkdocstrings[python] mkdocs-include-markdown-plugin
       - name: Build site
         run: mkdocs build --strict
       - name: Upload pages artifact

@@ -3,7 +3,9 @@ site_description: ISO/IEC 29794-5 component-aligned synthetic face image quality
 site_url: https://astoreyai.github.io/ofiq-syngen
 repo_url: https://github.com/astoreyai/ofiq-syngen
 repo_name: astoreyai/ofiq-syngen
-edit_uri: edit/main/
+edit_uri: edit/main/docs/
+
+docs_dir: docs
 
 theme:
   name: material
@@ -22,17 +24,21 @@ theme:
     - search.highlight
 
 nav:
-  - Home: README.md
+  - Home: index.md
   - Usage: USAGE.md
-  - Citing: docs/CITING.md
+  - Citing: CITING.md
   - Theory:
-      - Overview: docs/theory/index.md
-      - Per-component status: docs/theory/COMPONENT_STATUS.md
+      - Overview: theory/index.md
+      - Per-component status: theory/COMPONENT_STATUS.md
       - Algorithmic analysis: ANALYSIS.md
   - Standards:
-      - Multi-standard mapping: docs/standards/MAPPING.md
-      - OFIQ source provenance: docs/standards/PROVENANCE.md
-      - Sources and pinning: docs/standards/SOURCES.md
+      - Multi-standard mapping: standards/MAPPING.md
+      - OFIQ source provenance: standards/PROVENANCE.md
+      - Sources and pinning: standards/SOURCES.md
+      - ISO 29794-5 coverage: ISO_COVERAGE.md
+      - Failure modes: FAILURE_MODES.md
+  - Gallery:
+      - Overview: gallery/README.md
   - Project:
       - Contributing: CONTRIBUTING.md
       - OFIQ upstream policy: OFIQ_UPSTREAM.md
@@ -41,6 +47,7 @@ nav:
 
 plugins:
   - search
+  - include-markdown
   - mkdocstrings:
       handlers:
         python:
@@ -61,12 +68,3 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
-
-docs_dir: .
-exclude_docs: |
-  src/
-  tests/
-  build/
-  dist/
-  examples/captures/
-  __pycache__/

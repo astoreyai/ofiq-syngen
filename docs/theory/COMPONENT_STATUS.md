@@ -10,7 +10,7 @@ This is the table to consult when:
 - Drafting a paper section: what defends the per-component claim.
 - Planning future work: where coverage is thin.
 
-For algorithm details, see [`../../ANALYSIS.md`](../../ANALYSIS.md).
+For algorithm details, see [`ANALYSIS.md`](../ANALYSIS.md).
 For citation guidance, see [`../CITING.md`](../CITING.md).
 
 ## Status table
@@ -73,7 +73,7 @@ For citation guidance, see [`../CITING.md`](../CITING.md).
 | Severity monotonicity (image delta) | 15 / 28 | 5 ctx-skip + 8 monotonicity-exempt (geometric translations + content-overlay) |
 | Output finite, in-range | 28 / 28 | `test_output_finite_and_in_range` |
 | Size invariance (64 / 112 / 256) | 28 / 28 | `test_works_on_small_image` and `test_works_on_large_image` |
-| OFIQ parity vectors | 0 / 28 | Manifest empty; see [`tests/fixtures/ofiq_parity/REGENERATE.md`](../../tests/fixtures/ofiq_parity/REGENERATE.md) |
+| OFIQ parity vectors | 0 / 28 | Manifest empty; see [`tests/fixtures/ofiq_parity/REGENERATE.md`](https://github.com/astoreyai/ofiq-syngen/blob/main/tests/fixtures/ofiq_parity/REGENERATE.md) |
 
 ## Known limitations
 
@@ -83,7 +83,7 @@ For citation guidance, see [`../CITING.md`](../CITING.md).
 2. **`partial`-alignment components** (`LuminanceVariance`, `DynamicRange`,
    `NoHeadCoverings`): the perturbation reaches the measurement region
    but does not perfectly invert the metric. Documented in `MAPPING.md`.
-3. **`MODERATE` algorithm fidelity** (per [`ANALYSIS.md`](../../ANALYSIS.md)):
+3. **`MODERATE` algorithm fidelity** (per [`ANALYSIS.md`](../ANALYSIS.md)):
    `SingleFacePresent`, `HeadPoseYaw`, `HeadPosePitch`,
    `ExpressionNeutrality`, `NoHeadCoverings`. The perturbation method is
    honest about its approximation: e.g., perspective warp for yaw rather

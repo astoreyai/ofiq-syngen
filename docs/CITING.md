@@ -121,5 +121,5 @@ content contribution.
 If you build on `ofiq-syngen` (forks, derivatives, integration into a
 larger tool), please cite this package and consider opening a pull
 request to add your project to a "Used by" list in the README. See
-[`OFIQ_UPSTREAM.md`](../OFIQ_UPSTREAM.md) for the relationship policy
+[`OFIQ_UPSTREAM.md`](OFIQ_UPSTREAM.md) for the relationship policy
 with the upstream OFIQ project.

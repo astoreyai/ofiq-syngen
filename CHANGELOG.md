@@ -2,6 +2,22 @@
 
 All notable changes to the ofiq-syngen package.
 
+## [0.3.3] - 2026-04-30
+
+### Changed
+
+- Docs site restructure: `docs_dir` is now `docs/` (mkdocs strict mode
+  rejects parent-of-config). Top-level READMEs (USAGE, CHANGELOG,
+  CONTRIBUTING, CODE_OF_CONDUCT, OFIQ_UPSTREAM, ANALYSIS) stay at
+  package root as the source of truth and are pulled into docs/ via
+  `mkdocs-include-markdown-plugin` stubs (one per file). Single source
+  of truth, no duplication.
+- Docs workflow re-enabled to run on push to main. Builds with
+  `mkdocs build --strict` and deploys to GitHub Pages on success.
+- Cross-doc references in USAGE.md and OFIQ_UPSTREAM.md that pointed at
+  paths inside `docs/` rewritten to absolute GitHub URLs so they survive
+  both GitHub-root and mkdocs-site rendering.
+
 ## [0.3.2] - 2026-04-29
 
 ### Added
