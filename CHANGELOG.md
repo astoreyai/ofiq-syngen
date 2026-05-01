@@ -2,6 +2,42 @@
 
 All notable changes to the ofiq-syngen package.
 
+## [0.4.1] - 2026-04-30
+
+### Added
+
+- OFIQ-binary parity vectors populated for the 4 fixed crop/margin
+  operators across 3 CelebA images x 3 severities (0.0, 0.5, 1.0) = 36
+  vectors. Empirically confirms each operator now degrades its OFIQ
+  scalar in the correct direction (e.g., MarginAbove 14 -> -1, 85 -> 0,
+  53 -> -1; LeftwardCrop 100 -> 79/92/99). Pre-fix the operators would
+  have left scores at 100 or increased them.
+- Gallery (`docs/gallery/`): 28 per-component severity strips
+  (5 levels each) generated from canonical CelebA face. Auto-generated
+  per-component Markdown pages with FDIS clause + ICAO mapping +
+  embedded strip. INDEX.md provides navigation. Strip PNGs are
+  gitignored; regenerate locally with
+  `python scripts/regenerate_gallery.py --face docs/gallery/canonical.jpg`.
+- Zenodo webhook integration: CITATION.cff already in place; once
+  Zenodo is enabled at https://zenodo.org/account/settings/github/
+  the next GitHub Release auto-archives and assigns a DOI. README
+  includes a placeholder DOI badge that updates after Zenodo runs.
+
+### Changed
+
+- `scripts/regenerate_parity_vectors.py`: fixed to use the OFIQ 1.1.0
+  SampleApp interface (`-c configDir -i inputFile -o outputFile`,
+  semicolon-delimited CSV). Pre-fix used a `-l` flag the binary does
+  not support.
+- `docs/gallery/README.md`: documents CelebA as a local-development
+  option with explicit "do not commit" guidance.
+- `tests/test_components.py::test_section_references`: now asserts
+  FDIS clause format (`[§` or `[Annex`) instead of legacy `[S`.
+- All `_register()` description strings in `components.py` and operator
+  docstrings migrated from `[S6.x]/[S7.x]/[S8]` to FDIS clauses.
+  Crop/margin registration descriptions rewritten to reflect post-fix
+  shift directions.
+
 ## [0.4.0] - 2026-04-30
 
 ### Fixed

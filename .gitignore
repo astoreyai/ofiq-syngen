@@ -36,3 +36,13 @@ env/
 .DS_Store
 Thumbs.db
 site/
+
+# Gallery canonical images (license-restricted)
+docs/gallery/canonical.jpg
+docs/gallery/canonical.jpeg
+
+# Notebook executed outputs (regenerable)
+notebooks/celeba_component_perturbation.pdf
+notebooks/component_perturbation_grid.png
+notebooks/crop_margin_v040_fix.png
+notebooks/celeba_component_perturbation_files/

@@ -3,10 +3,14 @@
 [![PyPI version](https://img.shields.io/pypi/v/ofiq-syngen.svg)](https://pypi.org/project/ofiq-syngen/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.PENDING.svg)](https://doi.org/10.5281/zenodo.PENDING)
+[![CI](https://github.com/astoreyai/ofiq-syngen/actions/workflows/ci.yml/badge.svg)](https://github.com/astoreyai/ofiq-syngen/actions/workflows/ci.yml)
 
 **ISO/IEC 29794-5 component-aligned synthetic face image quality degradation pipeline.**
 
-`ofiq-syngen` generates controlled quality degradations mapped to specific ISO/IEC 29794-5 (OFIQ) quality components. Each degradation function targets a known OFIQ scalar component -- Sharpness, CompressionArtifacts, HeadPoseYaw, etc. -- producing ground-truth (image, degradation, delta-OFIQ) triplets for training quality-aware biometric systems. The pipeline covers 25 of the 27 OFIQ scalar components with 27 deterministic, seed-reproducible degradation functions.
+`ofiq-syngen` generates controlled quality degradations mapped to specific ISO/IEC 29794-5 (OFIQ) quality components. Each degradation function targets a known OFIQ scalar component -- Sharpness, CompressionArtifacts, HeadPoseYaw, etc. -- producing ground-truth (image, degradation, delta-OFIQ) triplets for training quality-aware biometric systems. **All 27 OFIQ-measurable components are covered** with deterministic, seed-reproducible degradation operators; OFIQ-binary parity vectors verify each operator degrades its target scalar in the correct direction.
+
+**Visual gallery**: see [`docs/gallery/INDEX.md`](docs/gallery/INDEX.md) for severity strips of every component on a canonical face image.
 
 ## Installation
 

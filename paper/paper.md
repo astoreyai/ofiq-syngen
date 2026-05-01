@@ -113,8 +113,7 @@ inference for face context.
 # Acknowledgments
 
 We thank the BSI OFIQ-Project team for the open-source reference
-implementation, and CITeR (Center for Identification Technology
-Research) for funding support. The systematic review companion paper
+implementation. The systematic review companion paper
 [@p6_systematic_review] informed the per-component method selection.
 
 # References

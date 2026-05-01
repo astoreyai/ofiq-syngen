@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-05-01T00:50:30.735820Z",
+  "generated_at": "2026-05-01T01:07:50.898065Z",
   "generator_script": "scripts/regenerate_parity_vectors.py",
   "image_set": [
     {
-      "id": "20160518023P_Front[1]",
-      "path": "images/20160518023P_Front[1].jpg",
-      "sha256": "5effffb1ef8187787b67bf2adb481405b354ff55c3632285911b8e0224c957e5"
+      "id": "celeba_000001",
+      "path": "images/celeba_000001.jpg",
+      "sha256": "0c52a315403f6c5803ce82b5e2b5920ae799035b5c0ab3192dd80e52a231927b"
     },
     {
-      "id": "20160518031L_Front[1]",
-      "path": "images/20160518031L_Front[1].jpg",
-      "sha256": "ccc0e7e9bf79628408b8fe864267f9fa7a060a8db7f50333304411d30e5e60fc"
+      "id": "celeba_000010",
+      "path": "images/celeba_000010.jpg",
+      "sha256": "714298d47ce761b485667f768dd4023c53f9db85760ce4ef0b4481f786001cd5"
     },
     {
-      "id": "20221010011Q_Front[1]",
-      "path": "images/20221010011Q_Front[1].jpg",
-      "sha256": "00d4e09d6626111ad94b8166d3a5ff6499dcac846c3e3074394ecd0a275a8123"
+      "id": "celeba_000100",
+      "path": "images/celeba_000100.jpg",
+      "sha256": "da70a1b19ba64275bc46cef60537c6326ba90a3b392db1b4b653edbd7958604e"
     }
   ],
   "ofiq_version": "1.1.0",
@@ -26,193 +26,289 @@
   "vectors": [
     {
       "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
       "expected_score": 100.0,
-      "image_id": "20160518023P_Front[1]",
+      "image_id": "celeba_000001",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward shift [S8 CropLeft]",
-      "expected_score": 99.0,
-      "image_id": "20160518023P_Front[1]",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
+      "expected_score": 79.0,
+      "image_id": "celeba_000001",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward shift [S8 CropRight]",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
       "expected_score": 100.0,
-      "image_id": "20160518023P_Front[1]",
+      "image_id": "celeba_000001",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward shift [S8 CropRight]",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
       "expected_score": 100.0,
-      "image_id": "20160518023P_Front[1]",
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 72.0,
+      "image_id": "celeba_000001",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "MarginAboveOfTheFaceImage.scalar",
-      "degradation_type": "Downward shift [S8 MarginAbove]",
-      "expected_score": 99.0,
-      "image_id": "20160518023P_Front[1]",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
+      "expected_score": 14.0,
+      "image_id": "celeba_000001",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "MarginAboveOfTheFaceImage.scalar",
-      "degradation_type": "Downward shift [S8 MarginAbove]",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
       "expected_score": 0.0,
-      "image_id": "20160518023P_Front[1]",
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
+      "expected_score": -1.0,
+      "image_id": "celeba_000001",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "MarginBelowOfTheFaceImage.scalar",
-      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
       "expected_score": 100.0,
-      "image_id": "20160518023P_Front[1]",
+      "image_id": "celeba_000001",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "MarginBelowOfTheFaceImage.scalar",
-      "degradation_type": "Upward shift [S8 MarginBelow]",
-      "expected_score": 1.0,
-      "image_id": "20160518023P_Front[1]",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
+      "expected_score": 4.0,
+      "image_id": "celeba_000001",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
       "expected_score": 100.0,
-      "image_id": "20160518031L_Front[1]",
+      "image_id": "celeba_000010",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
       "expected_score": 92.0,
-      "image_id": "20160518031L_Front[1]",
+      "image_id": "celeba_000010",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward shift [S8 CropRight]",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
       "expected_score": 100.0,
-      "image_id": "20160518031L_Front[1]",
+      "image_id": "celeba_000010",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward shift [S8 CropRight]",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
       "expected_score": 100.0,
-      "image_id": "20160518031L_Front[1]",
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 49.0,
+      "image_id": "celeba_000010",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "MarginAboveOfTheFaceImage.scalar",
-      "degradation_type": "Downward shift [S8 MarginAbove]",
-      "expected_score": 80.0,
-      "image_id": "20160518031L_Front[1]",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
+      "expected_score": 85.0,
+      "image_id": "celeba_000010",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "MarginAboveOfTheFaceImage.scalar",
-      "degradation_type": "Downward shift [S8 MarginAbove]",
-      "expected_score": -1.0,
-      "image_id": "20160518031L_Front[1]",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000010",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "MarginBelowOfTheFaceImage.scalar",
-      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
       "expected_score": 100.0,
-      "image_id": "20160518031L_Front[1]",
+      "image_id": "celeba_000010",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "MarginBelowOfTheFaceImage.scalar",
-      "degradation_type": "Upward shift [S8 MarginBelow]",
-      "expected_score": 1.0,
-      "image_id": "20160518031L_Front[1]",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
+      "expected_score": 78.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000010",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
       "expected_score": 100.0,
-      "image_id": "20221010011Q_Front[1]",
+      "image_id": "celeba_000100",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
       "expected_score": 100.0,
-      "image_id": "20221010011Q_Front[1]",
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000100",
       "seed": 42,
       "severity": 1.0
     },
     {
       "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward shift [S8 CropRight]",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
       "expected_score": 100.0,
-      "image_id": "20221010011Q_Front[1]",
+      "image_id": "celeba_000100",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward shift [S8 CropRight]",
-      "expected_score": 86.0,
-      "image_id": "20221010011Q_Front[1]",
-      "seed": 42,
-      "severity": 1.0
-    },
-    {
-      "component": "MarginAboveOfTheFaceImage.scalar",
-      "degradation_type": "Downward shift [S8 MarginAbove]",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
       "expected_score": 100.0,
-      "image_id": "20221010011Q_Front[1]",
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 46.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
+      "expected_score": 53.0,
+      "image_id": "celeba_000100",
       "seed": 42,
       "severity": 0.0
     },
     {
       "component": "MarginAboveOfTheFaceImage.scalar",
-      "degradation_type": "Downward shift [S8 MarginAbove]",
-      "expected_score": 1.0,
-      "image_id": "20221010011Q_Front[1]",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000100",
       "seed": 42,
-      "severity": 1.0
+      "severity": 0.5
     },
     {
-      "component": "MarginBelowOfTheFaceImage.scalar",
-      "degradation_type": "Upward shift [S8 MarginBelow]",
-      "expected_score": 1.0,
-      "image_id": "20221010011Q_Front[1]",
-      "seed": 42,
-      "severity": 0.0
-    },
-    {
-      "component": "MarginBelowOfTheFaceImage.scalar",
-      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Upward image shift (face toward top) [\u00a77.4.10.3]",
       "expected_score": -1.0,
-      "image_id": "20221010011Q_Front[1]",
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
+      "expected_score": 4.0,
+      "image_id": "celeba_000100",
       "seed": 42,
       "severity": 1.0
     }

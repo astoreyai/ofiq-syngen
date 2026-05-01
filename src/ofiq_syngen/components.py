@@ -248,28 +248,72 @@ def _reduce_luminance_variance_face(
     return np.clip(result, 0, 255).astype(np.uint8)
 
 
+def _feather_mask(mask: np.ndarray, sigma: float | None = None) -> np.ndarray:
+    """Convert binary uint8 mask to a soft alpha (0..1 float32) via Gaussian.
+
+    Sigma defaults to mask_diameter / 60 (visually invisible mask edge).
+    """
+    h, w = mask.shape[:2]
+    if sigma is None:
+        sigma = max(2.0, min(h, w) / 60)
+    soft = cv2.GaussianBlur(mask.astype(np.float32), (0, 0), sigma)
+    return np.clip(soft, 0.0, 1.0)
+
+
+def _alpha_blend(
+    orig: np.ndarray, perturbed: np.ndarray, soft_mask: np.ndarray,
+) -> np.ndarray:
+    """Blend perturbed pixels onto orig using the soft alpha mask."""
+    a = soft_mask[..., None] if soft_mask.ndim == 2 else soft_mask
+    blended = (
+        orig.astype(np.float32) * (1.0 - a) +
+        perturbed.astype(np.float32) * a
+    )
+    return np.clip(blended, 0, 255).astype(np.uint8)
+
+
 def _reduce_dynamic_range(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Compress dynamic range toward mid-gray [§7.3.7]. Keep as-is (EXCELLENT fidelity)."""
+    """Compress dynamic range toward mid-gray within the face mask [§7.3.7].
+
+    OFIQ measures Shannon entropy of luminance histogram on the face landmark
+    mask. Perturbation is masked to the face region with feathered alpha so
+    background entropy is unchanged.
+    """
     mid = 128.0
     factor = 1.0 - severity * 0.9
-    return np.clip(mid + (img.astype(np.float32) - mid) * factor, 0, 255).astype(np.uint8)
+    perturbed = np.clip(
+        mid + (img.astype(np.float32) - mid) * factor, 0, 255
+    ).astype(np.uint8)
+
+    if ctx is not None and ctx.face_mask is not None:
+        return _alpha_blend(img, perturbed, _feather_mask(ctx.face_mask))
+    return perturbed
 
 
 def _blur(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Gaussian blur [§7.3.8]. Keep as-is (EXCELLENT fidelity)."""
+    """Gaussian blur within the face mask [§7.3.8].
+
+    OFIQ measures sharpness via RF on Sobel/Laplace features of the face
+    crop. Blur is applied only inside the face mask so the background
+    remains sharp.
+    """
     sigma = severity * 10.0 + 0.5
     ksize = int(6 * sigma + 1) | 1
-    return cv2.GaussianBlur(img, (ksize, ksize), sigma)
+    perturbed = cv2.GaussianBlur(img, (ksize, ksize), sigma)
+
+    if ctx is not None and ctx.face_mask is not None:
+        return _alpha_blend(img, perturbed, _feather_mask(ctx.face_mask))
+    return perturbed
 
 
 def _motion_blur(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Motion blur [§7.3.8]. Keep as-is (EXCELLENT fidelity)."""
+    """Directional motion blur within the face mask [§7.3.8]."""
     ksize = max(int(severity * 30) + 1, 3)
     kernel = np.zeros((ksize, ksize))
     rng = np.random.RandomState(seed)
@@ -281,17 +325,28 @@ def _motion_blur(
         if 0 <= x < ksize and 0 <= y < ksize:
             kernel[y, x] = 1
     kernel /= kernel.sum() + 1e-8
-    return cv2.filter2D(img, -1, kernel)
+    perturbed = cv2.filter2D(img, -1, kernel)
+
+    if ctx is not None and ctx.face_mask is not None:
+        return _alpha_blend(img, perturbed, _feather_mask(ctx.face_mask))
+    return perturbed
 
 
 def _gaussian_noise(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Additive Gaussian noise [§7.3.8]. Keep as-is (EXCELLENT fidelity)."""
+    """Additive Gaussian noise within the face mask [§7.3.8].
+
+    Noise on the luminance channel only (preserves color saturation).
+    """
     rng = np.random.RandomState(seed)
     sigma = severity * 80
     noise = rng.randn(*img.shape) * sigma
-    return np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+    perturbed = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+
+    if ctx is not None and ctx.face_mask is not None:
+        return _alpha_blend(img, perturbed, _feather_mask(ctx.face_mask))
+    return perturbed
 
 
 def _jpeg_compression(

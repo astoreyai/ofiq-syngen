@@ -1,0 +1,22 @@
+# NaturalColour.scalar
+
+![NaturalColour.scalar severity strip](gallery/images/NaturalColour_strip.png)
+
+Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
+
+## Standards
+
+- OFIQ section: `§7.3.10`
+- ISO/IEC 29794-5: Natural colour
+- ISO/IEC 19794-5: 9.1 colour space
+- ICAO 9303 P9: 3.2.4 true colour
+- Alignment: `exact`, confidence: `verified`
+- OFIQ versions: 1.1
+
+## Degradation method
+
+- CIELAB color shift in ROI zones [§7.3.10]
+
+## Notes
+
+Add per-component caption text describing where the perturbation is visually convincing and where it betrays its synthetic origin.

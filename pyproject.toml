@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ofiq-syngen"
-version = "0.4.0"
+version = "0.4.1"
 description = "ISO/IEC 29794-5 component-aligned synthetic face image quality degradation pipeline"
 readme = "README.md"
 license = "MIT"

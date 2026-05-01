@@ -9,7 +9,7 @@ gallery locally:
 
 ## Choose a canonical face
 
-License-clean options:
+License-clean options for **redistribution**:
 
 - **FFHQ samples** (Creative Commons BY 2.0): pick a 1024x1024 face from
   https://github.com/NVlabs/ffhq-dataset.
@@ -17,9 +17,17 @@ License-clean options:
   https://thispersondoesnotexist.com produces a fresh sample per refresh.
 - **Generated/placeholder**: any face you control the rights to.
 
-Avoid CelebA, CASIA, MS-Celeb-1M, and VGGFace2 unless you've verified
-the redistribution terms allow embedding a sample image in your fork's
-documentation.
+For **local development only** (do NOT commit the image):
+
+- **CelebA** (research-only): if you have it downloaded, use any image
+  from `img_align_celeba/` as your canonical face. The package's parity
+  fixtures (`tests/fixtures/ofiq_parity/`) reference CelebA images
+  `000001`, `000010`, `000100` by sha256 — the manifest with expected
+  OFIQ scores ships with the package; the images themselves are
+  gitignored and must be downloaded separately.
+
+Avoid committing CelebA, CASIA, MS-Celeb-1M, and VGGFace2 images to
+public repositories — those datasets restrict redistribution.
 
 ## Regenerate
 
