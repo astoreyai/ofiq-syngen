@@ -38,7 +38,7 @@ degraded, meta = pipeline.degrade_single(
 )
 cv2.imwrite("degraded.jpg", degraded)
 print(meta)
-# {'target_component': 'Sharpness.scalar', 'degradation_type': 'Gaussian blur [S6.6]',
+# {'target_component': 'Sharpness.scalar', 'degradation_type': 'Gaussian blur [§7.3.8]',
 #  'severity': 0.6, 'seed': 42}
 
 # Sweep severity levels
@@ -93,46 +93,49 @@ the full per-component cross-reference.
 
 ## Component Coverage
 
-25 of 27 OFIQ scalar components are covered. Each row maps to the OFIQ Algorithm Book (BSI V1.2) section reference.
+All 27 OFIQ scalar components are covered. Section references follow ISO/IEC FDIS 29794-5:2024 (= IS:2025).
 
-| OFIQ Component | Section | Degradation | Severity Range |
+| OFIQ Component | FDIS § | Degradation | Severity Range |
 |---|---|---|---|
-| `BackgroundUniformity.scalar` | S6.1 | Background noise | intensity: 0 -> 200 |
-| `IlluminationUniformity.scalar` | S6.2 | Gradient lighting | gradient: 0% -> 80% drop |
-| `LuminanceMean.scalar` | S6.3 | Brightness reduction | factor: 1.0 -> 0.15 |
-| `LuminanceVariance.scalar` | S6.3 | Variance compression | factor: 1.0 -> 0.1 |
-| `UnderExposurePrevention.scalar` | S6.4 | Under-exposure | factor: 1.0 -> 0.15 |
-| `OverExposurePrevention.scalar` | S6.4 | Over-exposure | factor: 1.0 -> 3.5 |
-| `DynamicRange.scalar` | S6.5 | Dynamic range compression | range: 100% -> 10% |
-| `Sharpness.scalar` | S6.6 | Gaussian blur | sigma: 0.5 -> 10.5 |
-| `Sharpness.scalar` | S6.6 | Motion blur | kernel: 3 -> 31px |
-| `Sharpness.scalar` | S6.6 | Additive Gaussian noise | sigma: 0 -> 80 |
-| `CompressionArtifacts.scalar` | S6.7 | JPEG compression | Q: 100 -> 5 |
-| `NaturalColour.scalar` | S6.8 | Color channel cast | offset: 0 -> 80 |
-| `RadialDistortion.scalar` | S6.9 | Barrel distortion | k: 0 -> 0.5 |
-| `EyesOpen.scalar` | S7.2 | Eye-region occlusion | band: 15% -> 30% |
-| `MouthClosed.scalar` | S7.3 | Mouth-region occlusion | band: 20% -> 40% |
-| `EyesVisible.scalar` | S7.4 | Eye-region occlusion | band: 15% -> 30% |
-| `MouthOcclusionPrevention.scalar` | S7.5 | Mouth occlusion/mask | band: 20% -> 40% |
-| `FaceOcclusionPrevention.scalar` | S7.6 | Rectangular occlusion | area: 0% -> 60% |
-| `InterEyeDistance.scalar` | S7.7 | Resolution reduction | factor: 1.0 -> 0.1 |
-| `HeadSize.scalar` | S7.8 | Resolution reduction | factor: 1.0 -> 0.1 |
-| `HeadPoseYaw.scalar` | S8 | Simulated yaw rotation | squeeze: 0% -> 50% |
-| `HeadPosePitch.scalar` | S8 | Simulated pitch tilt | squeeze: 0% -> 40% |
-| `HeadPoseRoll.scalar` | S8 | In-plane rotation | angle: 0 -> +/-30 deg |
-| `LeftwardCropOfTheFaceImage.scalar` | S8 | Crop offset | shift: 0% -> 30% |
-| `RightwardCropOfTheFaceImage.scalar` | S8 | Crop offset | shift: 0% -> 30% |
-| `MarginAboveOfTheFaceImage.scalar` | S8 | Crop offset | shift: 0% -> 30% |
-| `MarginBelowOfTheFaceImage.scalar` | S8 | Crop offset | shift: 0% -> 30% |
+| `BackgroundUniformity.scalar` | §7.3.2 | Background noise | intensity: 0 -> 200 |
+| `IlluminationUniformity.scalar` | §7.3.3 | Gradient lighting | gradient: 0% -> 80% drop |
+| `LuminanceMean.scalar` | §7.3.4.2 | Brightness reduction | factor: 1.0 -> 0.15 |
+| `LuminanceVariance.scalar` | §7.3.4.3 | Variance compression | factor: 1.0 -> 0.1 |
+| `UnderExposurePrevention.scalar` | §7.3.5 | Under-exposure | factor: 1.0 -> 0.15 |
+| `OverExposurePrevention.scalar` | §7.3.6 | Over-exposure | factor: 1.0 -> 3.5 |
+| `DynamicRange.scalar` | §7.3.7 | Dynamic range compression | range: 100% -> 10% |
+| `Sharpness.scalar` | §7.3.8 | Gaussian blur | sigma: 0.5 -> 10.5 |
+| `Sharpness.scalar` | §7.3.8 | Motion blur | kernel: 3 -> 31px |
+| `Sharpness.scalar` | §7.3.8 | Additive Gaussian noise | sigma: 0 -> 80 |
+| `CompressionArtifacts.scalar` | §7.3.9 | JPEG compression | Q: 100 -> 5 |
+| `NaturalColour.scalar` | §7.3.10 | CIELAB a\*/b\* shift in ROI zones | shift: 0 -> 60 |
+| `RadialDistortion.scalar` | Annex D.2.1 | Barrel distortion (no QAA in IS:2025) | k: 0 -> 0.5 |
+| `EyesOpen.scalar` | §7.4.3 | Landmark-warped eye closure | closure: 0% -> 90% |
+| `MouthClosed.scalar` | §7.4.4 | Landmark-warped mouth opening | opening: 0 -> 0.25t |
+| `EyesVisible.scalar` | §7.4.5 | EVZ-targeted eye occlusion | coverage: 0% -> 80% |
+| `MouthOcclusionPrevention.scalar` | §7.4.6 | Polygon-targeted mouth occlusion | coverage: 0% -> 100% |
+| `FaceOcclusionPrevention.scalar` | §7.4.7 | Face-masked rectangular occlusion | area: 0% -> 60% |
+| `InterEyeDistance.scalar` | §7.4.8 | Pad-and-shrink (face smaller in frame) | scale: 1.0 -> 0.3 |
+| `HeadSize.scalar` | §7.4.9 | Pad-and-shrink (same mechanism as IED) | scale: 1.0 -> 0.3 |
+| `HeadPoseYaw.scalar` | §7.4.11.2 | Perspective yaw rotation | squeeze: 0% -> 50% |
+| `HeadPosePitch.scalar` | §7.4.11.3 | Perspective pitch tilt | squeeze: 0% -> 40% |
+| `HeadPoseRoll.scalar` | §7.4.11.4 | In-plane rotation | angle: 0 -> +/-30 deg |
+| `LeftwardCropOfTheFaceImage.scalar` | §7.4.10.1 | Leftward image shift (v0.4.0 fix) | shift: 0% -> 40% |
+| `RightwardCropOfTheFaceImage.scalar` | §7.4.10.2 | Rightward image shift (v0.4.0 fix) | shift: 0% -> 40% |
+| `MarginAboveOfTheFaceImage.scalar` | §7.4.10.3 | Upward image shift (v0.4.0 fix) | shift: 0% -> 40% |
+| `MarginBelowOfTheFaceImage.scalar` | §7.4.10.4 | Downward image shift (v0.4.0 fix) | shift: 0% -> 40% |
+| `SingleFacePresent.scalar` | §7.4.2 | Face insertion via Poisson blending | area ratio: 0 -> 0.4 |
+| `ExpressionNeutrality.scalar` | §7.4.12 | Landmark-warped expression | displacement: 0 -> 0.15t |
+| `NoHeadCoverings.scalar` | §7.4.13 | Synthetic hat overlay | coverage: 0% -> 100% |
 
-### Not Covered (2/27)
+### Coverage notes
 
-| Component | Reason |
-|---|---|
-| `ExpressionNeutrality.scalar` | Requires facial Action Unit manipulation |
-| `NoHeadCoverings.scalar` | Requires realistic overlay generation |
-
-(`SingleFacePresent.scalar` requires face insertion and is also out of scope.)
+All 27 measurable OFIQ components have direct degraders. Three subject-related
+components — `ExpressionNeutrality`, `NoHeadCoverings`, `SingleFacePresent` —
+use generative operators (landmark RBF warps, synthetic overlays, Poisson-blended
+face inserts respectively) that depend on OFIQ ONNX models classifying the
+synthetic content correctly. Effectiveness against the OFIQ classifier is verified
+via the parity manifest (`tests/fixtures/ofiq_parity/`).
 
 ## Severity Levels
 

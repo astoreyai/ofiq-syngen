@@ -20,9 +20,9 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 
 ---
 
-## Section 6 — Capture-Related Components
+## FDIS §7.3 — Capture-Related Components
 
-### 6.1 BackgroundUniformity
+### §7.3.2 BackgroundUniformity
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -30,7 +30,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Background only**: BiSeNet class 0, eroded with 4x4 kernel. Excludes padding regions via affine transform mask. Cropped 62px sides, 108px bottom, resized to 354x295. | **Background only**: Same BiSeNet class 0 mask from `ctx.parsing_map`, eroded with 4x4 kernel. Noise placed only within mask. |
 | **Alignment** | **GOOD**. Same mask, same erosion. Syngen creates edges (Sobel-detectable) within the exact region OFIQ analyzes. The noise patches create sharp gradients that directly increase the mean Sobel magnitude OFIQ computes. |
 
-### 6.2 IlluminationUniformity
+### §7.3.3 IlluminationUniformity
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -38,7 +38,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Left and right eye ROI zones**: zoneSize = int(IED × 0.3). Right ROI: (rightEyeCenter.x − zoneSize, rightEyeCenter.y + eyeMouthDist/2, zoneSize, zoneSize). Left ROI symmetrically from leftEyeCenter. Applied to face-masked luminance image. | **One of the two ROI zones**: Uses `ctx.left_roi` / `ctx.right_roi` computed from ADNet landmarks with identical formula. Darkens one while leaving the other at original intensity. |
 | **Alignment** | **EXCELLENT**. Same ROI zones, same landmark-derived computation. Darkening one zone directly reduces the histogram intersection (overlap) that OFIQ computes, since the darkened zone's histogram shifts left while the untouched zone stays in place. |
 
-### 6.3 LuminanceMean
+### §7.3.4.2 LuminanceMean
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -46,7 +46,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face landmark mask**: convex hull of 98 ADNet landmarks with optional forehead extension. rec.709 linearized luminance (not cv2 grayscale). | **Face mask**: Same `ctx.face_mask` from ADNet landmark convex hull. Darkening applied with `np.where(mask, darkened, original)`. |
 | **Alignment** | **EXCELLENT**. Same face mask. Darkening within the masked region directly reduces the mean luminance that OFIQ computes. Only limitation: syngen only darkens (reduces mean), while OFIQ's double sigmoid also penalizes high mean. |
 
-### 6.3 LuminanceVariance
+### §7.3.4.3 LuminanceVariance
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -54,7 +54,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face landmark mask**: same mask as LuminanceMean. Luminance histogram variance within that mask. | **Face mask**: Same `ctx.face_mask`. Compresses toward per-channel mean computed only from face pixels. |
 | **Alignment** | **GOOD**. Same face mask. Compressing RGB channels toward their means reduces luminance variance. Minor mismatch: OFIQ computes variance on rec.709 luminance, syngen compresses per-channel in RGB. The effect is directionally correct — pulling RGB channels toward their means necessarily compresses the resulting luminance distribution. |
 
-### 6.4 UnderExposurePrevention
+### §7.3.5 UnderExposurePrevention
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -62,7 +62,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face mask AND occlusion mask**: bitwise_and of landmark convex hull mask and binary occlusion segmentation mask. Counts dark pixels (lum 0–25) within this combined mask. | **Face mask AND occlusion mask**: Same `cv2.bitwise_and(ctx.face_mask, ctx.occlusion_mask)`. Darkening pushes pixels into the [0,25] range that OFIQ penalizes. |
 | **Alignment** | **EXCELLENT**. Same combined mask. Darkening directly increases the proportion of dark pixels OFIQ counts. |
 
-### 6.4 OverExposurePrevention
+### §7.3.6 OverExposurePrevention
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -70,7 +70,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face landmark mask**: counts bright pixels (lum 247–255). | **Face mask**: Same `ctx.face_mask`. Brightening pushes pixels into saturation (247–255 range). |
 | **Alignment** | **EXCELLENT**. Same mask. Brightening directly increases the proportion of saturated pixels OFIQ counts. |
 
-### 6.5 DynamicRange
+### §7.3.7 DynamicRange
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -78,7 +78,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face mask**: luminance histogram entropy. Higher entropy = wider tonal spread = better. | **Whole image**: compresses all pixel values toward 128, reducing histogram spread. |
 | **Alignment** | **EXCELLENT**. Compressing toward mid-gray concentrates the histogram, directly reducing Shannon entropy. Whole-image application is acceptable because the face dominates aligned crops. |
 
-### 6.6 Sharpness
+### §7.3.8 Sharpness
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -86,7 +86,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face region**: greyscale face crop. Features computed from Laplacian, Sobel, and blur-difference kernels. Random Forest trained on these features. | **Whole image**: blur reduces Laplacian/Sobel responses; noise reduces SNR and blurs edges. |
 | **Alignment** | **EXCELLENT**. Gaussian blur directly attenuates the Laplacian and Sobel responses the Random Forest uses as features. Motion blur attenuates directional gradients. Noise degrades all edge-based features. Three attack vectors provide good coverage. |
 
-### 6.7 CompressionArtifacts
+### §7.3.9 CompressionArtifacts
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -94,7 +94,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Center crop of aligned face**: 248×248 center region. Neural network trained to detect JPEG blocking/ringing artifacts. | **Whole image**: JPEG encode/decode at degraded quality produces exactly the blocking and ringing artifacts the neural network was trained to detect. |
 | **Alignment** | **EXCELLENT**. JPEG re-encoding produces the exact artifact type OFIQ's neural network was designed to detect. |
 
-### 6.8 NaturalColour
+### §7.3.10 NaturalColour
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -102,19 +102,19 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Left and right ROI zones** (same as IlluminationUniformity): landmark-derived zoneSize = int(IED × 0.3) squares positioned below each eye center. ROIs concatenated, converted to CIELAB. | **Left and right ROI zones**: Same `ctx.left_roi` / `ctx.right_roi`. Converts to LAB, shifts a\*/b\* channels, converts back. Applied within face-masked ROI. |
 | **Alignment** | **GOOD**. Same ROI zones. LAB shift directly pushes mean a\*/b\* outside the natural range OFIQ measures. Minor mismatch: syngen uses cv2 LAB conversion, OFIQ uses custom sRGB→CIELAB with D50 illuminant and different matrix coefficients. The direction of effect is correct, magnitude may differ slightly. |
 
-### 6.9 RadialDistortion
+### Annex D.2.1 RadialDistortion (no QAA in IS:2025)
 
 | | OFIQ | Syngen |
 |---|---|---|
 | **Algorithm** | Not measured in the current OFIQ deployment for this project (no entry in `OFIQ_COMPONENTS`). ISO 29794-5 Section 6.9 specifies deviation from rectilinear projection. | Barrel distortion via radial coefficient k (0 → 0.5). Uses cv2.remap with `scale = 1 + k × r²`. |
 | **Analyses / Perturbs** | — | **Whole image**: radially symmetric distortion centered on image center. |
-| **Alignment** | **N/A**. Forward-looking implementation for ISO 29794-5 S6.9. Not currently scored by OFIQ in this project. |
+| **Alignment** | **N/A**. Forward-looking implementation for an ISO 29794-5 quality requirement listed in FDIS Annex D.2.1 with no QAA in IS:2025. Not currently scored by OFIQ. |
 
 ---
 
-## Section 7 — Subject-Related Components
+## FDIS §7.4 — Subject-Related Components
 
-### 7.1 SingleFacePresent
+### §7.4.2 SingleFacePresent
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -122,7 +122,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Whole image**: face detection bounding boxes. Measures area ratio of second-largest to largest face. | **Background region**: face patch inserted into BiSeNet-segmented background. Uses `cv2.seamlessClone` for natural blending. |
 | **Alignment** | **MODERATE**. The inserted face crop must trigger SSD face detection to affect the score. Simple Poisson-blended self-crops may or may not be detected as faces by the SSD model. Effectiveness depends on the face detector's sensitivity to the inserted patch's appearance. |
 
-### 7.2 EyesOpen
+### §7.4.3 EyesOpen
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -130,7 +130,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Eye landmark geometry**: measures distances between upper and lower eyelid landmarks (3 pairs per eye). Ratio to tmetric (eye-to-chin distance). | **Eye landmark geometry**: warps upper eyelid landmarks (61,62,63 / 69,70,71) toward their lower counterparts (67,66,65 / 75,74,73). The image deformation changes what the landmark detector sees, reducing the measured pair distances. |
 | **Alignment** | **EXCELLENT**. Directly perturbs the geometric quantity OFIQ measures. The warp simulates eyelid closure, which is what reduced eye-opening distances represent. The landmark detector re-applied to the warped image should measure smaller pair distances. |
 
-### 7.3 MouthClosed
+### §7.4.4 MouthClosed
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -138,7 +138,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Mouth inner landmark geometry**: measures distances between upper and lower inner lip landmarks (3 pairs). | **Mouth inner landmark geometry**: warps inner lip landmarks apart, increasing the pair distances OFIQ measures. |
 | **Alignment** | **EXCELLENT**. Directly perturbs the geometric quantity OFIQ measures. The warp simulates mouth opening by separating the exact landmark pairs. Displacement scaled to tmetric ensures the rawScore exceeds the sigmoid midpoint (x0=0.2). |
 
-### 7.4 EyesVisible
+### §7.4.5 EyesVisible
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -146,7 +146,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Eye Visibility Zones**: expanded bounding rectangles around LEFT_EYE [60-67] and RIGHT_EYE [68-75] landmarks. Expansion = floor(IED/20) pixels. Uses face occlusion segmentation model to detect what's occluded within the zones. | **Same EVZ rectangles**: computed from `ctx.left_evz` / `ctx.right_evz` using identical V = floor(IED/20) formula. Occlusion placed centrally within each EVZ. |
 | **Alignment** | **GOOD**. Same EVZ regions. The dark band simulates sunglasses/hair. OFIQ's occlusion segmentation model must classify the synthetic occlusion as "not visible face" for the score to drop. Solid dark rectangles may or may not trigger the learned segmentation model identically to real-world occluders. |
 
-### 7.5 MouthOcclusionPrevention
+### §7.4.6 MouthOcclusionPrevention
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -154,7 +154,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Mouth polygon**: convex hull of 12 outer mouth landmarks. Uses occlusion segmentation to detect what's occluded within. | **Same mouth polygon**: `ctx.landmarks_98[76:88]` convex hull. Light blue/white fill simulating a surgical mask. |
 | **Alignment** | **GOOD**. Same polygon. The mask-colored fill simulates a surgical mask, which is a common real-world mouth occluder. Same dependency on the occlusion segmentation model's classification of the synthetic fill. |
 
-### 7.6 FaceOcclusionPrevention
+### §7.4.7 FaceOcclusionPrevention
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -162,7 +162,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face landmark mask**: convex hull of all 98 landmarks (with optional forehead extension). Uses occlusion segmentation to detect occlusion proportion. | **Same face mask**: rectangle placed within `ctx.face_mask` bounding box. Color randomized. Only face-mask pixels modified. |
 | **Alignment** | **GOOD**. Same face region. Occlusion placed within the face mask, not at random image positions. Same segmentation model dependency. |
 
-### 7.7 InterEyeDistance
+### §7.4.8 InterEyeDistance
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -170,7 +170,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Eye center geometry**: pixel distance between two points, corrected for head yaw angle. | **Whole image (geometric)**: shrinks the image content, making all facial landmarks closer together. On re-detection, the eye centers will be closer in pixel coordinates. |
 | **Alignment** | **GOOD**. Pad-and-shrink correctly reduces the pixel-domain IED that OFIQ measures. At max severity (scale 0.3), IED drops to ~30% of original, well below the sigmoid midpoint. Previous implementation (`_downscale` + upscale to same size) had zero effect on aligned crops — this is a fundamental fix. |
 
-### 7.8 HeadSize
+### §7.4.9 HeadSize
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -180,9 +180,9 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 
 ---
 
-## Section 8 — Geometric/Pose Components
+## FDIS §7.4.10–§7.4.13 — Geometric and Subject-Behavior Components
 
-### 8.1 HeadPoseYaw
+### §7.4.11.2 HeadPoseYaw
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -190,7 +190,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face region (3D model)**: learned 3D pose estimator operating on face crop. Outputs yaw angle in degrees. | **Whole image**: perspective transformation creating 2D foreshortening that approximates yaw rotation. |
 | **Alignment** | **MODERATE**. Perspective warp creates foreshortening cues that may trigger the 3D pose model's yaw detection, but doesn't produce the full appearance changes of real yaw rotation (ear visibility, jaw contour changes, nostril asymmetry). Calibration needed: verify measured angle vs. applied severity. |
 
-### 8.2 HeadPosePitch
+### §7.4.11.3 HeadPosePitch
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -198,7 +198,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face region (3D model)**: pitch angle from same Euler decomposition. | **Whole image**: vertical perspective transformation. |
 | **Alignment** | **MODERATE**. Same limitations as yaw. Perspective warp doesn't produce real pitch cues (forehead/chin visibility, nostril exposure). |
 
-### 8.3 HeadPoseRoll
+### §7.4.11.4 HeadPoseRoll
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -206,36 +206,36 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face region (3D model)**: roll angle from Euler decomposition. | **Whole image**: 2D rotation. |
 | **Alignment** | **EXCELLENT**. In-plane rotation IS roll. The 3D pose estimator correctly detects rotation angle from rotated images. Perfect geometric match. |
 
-### 8.4 LeftwardCropOfTheFaceImage
+### §7.4.10.1 LeftwardCropOfTheFaceImage
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | rawScore = rightEyeCenter.x / interEyeDistance. Sigmoid: h=100, x0=0.9, w=0.1. Measures how much margin exists to the left of the face. | Translate image RIGHT by severity × 40% of width. `shift_x = +int(severity × w × 0.4)`. Face moves left, left margin shrinks. |
-| **Analyses / Perturbs** | **Left margin**: ratio of right eye center's x-position to IED. | **Horizontal translation only**: rightward shift with border replication. Deterministic direction (not random). |
-| **Alignment** | **EXCELLENT**. Rightward image shift moves all landmarks right, increasing rightEyeCenter.x. But since the face is now further right, the LEFT margin of the frame is filled with replicated border content. OFIQ re-detecting the face on the shifted image will find reduced left margin. Previous implementation used random-direction shifts shared across all 4 crop components — this is a targeted fix. |
+| **Algorithm** | `q_l = rightEyeCenter.x / interEyeDistance`. Sigmoid: h=100, x0=0.9, w=0.1. Low `q_l` = face near left edge = excessive leftward crop = low Q. | Translate image LEFT by severity × 40% of width. `shift_x = −int(severity × w × 0.4)` (v0.4.0 fix). Face moves toward left edge, X_R decreases, q_l decreases, Q decreases. |
+| **Analyses / Perturbs** | **Right-eye-from-LEFT-edge ratio**: `X_R / IED`. | **Horizontal translation**: leftward shift with border replication. Deterministic direction. |
+| **Alignment** | **EXCELLENT (v0.4.0 fix)**. Pre-fix the operator shifted right and X_R increased, raising Q instead of degrading it. Fixed by sign flip: now leftward shift moves the face toward the left edge, reducing X_R, reducing q_l, reducing Q. Verified by `tests/test_degradation_direction.py::test_leftward_crop_decreases_x_r_over_ied`. |
 
-### 8.5 RightwardCropOfTheFaceImage
-
-| | OFIQ | Syngen |
-|---|---|---|
-| **Algorithm** | rawScore = (imageWidth − leftEyeCenter.x) / IED. Sigmoid: h=100, x0=0.9, w=0.1. | Translate image LEFT by severity × 40% of width. `shift_x = −int(severity × w × 0.4)`. |
-| **Alignment** | **EXCELLENT**. Mirror of LeftwardCrop. Leftward shift reduces right margin. |
-
-### 8.6 MarginAboveOfTheFaceImage
+### §7.4.10.2 RightwardCropOfTheFaceImage
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | rawScore = eyeMidPoint.y / tmetric. Sigmoid: h=100, x0=1.4, w=0.1. Measures top margin. | Translate image DOWN by severity × 40% of height. `shift_y = +int(severity × h × 0.4)`. |
-| **Alignment** | **EXCELLENT**. Downward shift moves face down, reducing top margin. |
+| **Algorithm** | `q_r = (imageWidth − leftEyeCenter.x) / IED`. Sigmoid: h=100, x0=0.9, w=0.1. | Translate image RIGHT by severity × 40% of width. `shift_x = +int(severity × w × 0.4)` (v0.4.0 fix). Face moves toward right edge, X_L increases, (W−X_L) decreases, q_r decreases, Q decreases. |
+| **Alignment** | **EXCELLENT (v0.4.0 fix)**. Pre-fix the operator shifted left and (W−X_L) increased, raising Q. Fixed by sign flip. Verified by `tests/test_degradation_direction.py::test_rightward_crop_decreases_w_minus_x_l_over_ied`. |
 
-### 8.7 MarginBelowOfTheFaceImage
+### §7.4.10.3 MarginAboveOfTheFaceImage
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | rawScore = (imageHeight − eyeMidPoint.y) / tmetric. Sigmoid: h=100, x0=1.8, w=0.1. | Translate image UP by severity × 40% of height. `shift_y = −int(severity × h × 0.4)`. |
-| **Alignment** | **EXCELLENT**. Upward shift reduces bottom margin. |
+| **Algorithm** | `q_a = eyeMidPoint.y / tmetric`. Sigmoid: h=100, x0=1.4, w=0.1. Low `q_a` = face near top = no top margin = low Q. | Translate image UP by severity × 40% of height. `shift_y = −int(severity × h × 0.4)` (v0.4.0 fix). Face moves toward top, Y_C decreases, q_a decreases, Q decreases. |
+| **Alignment** | **EXCELLENT (v0.4.0 fix)**. Pre-fix shifted down and increased Y_C, raising Q. Fixed by sign flip. Verified by `tests/test_degradation_direction.py::test_margin_above_decreases_y_c_over_t`. |
 
-### 8.8 ExpressionNeutrality
+### §7.4.10.4 MarginBelowOfTheFaceImage
+
+| | OFIQ | Syngen |
+|---|---|---|
+| **Algorithm** | `q_b = (imageHeight − eyeMidPoint.y) / tmetric`. Sigmoid: h=100, x0=1.8, w=0.1. | Translate image DOWN by severity × 40% of height. `shift_y = +int(severity × h × 0.4)` (v0.4.0 fix). Face moves toward bottom, Y_C increases, (H−Y_C) decreases, q_b decreases, Q decreases. |
+| **Alignment** | **EXCELLENT (v0.4.0 fix)**. Pre-fix shifted up. Fixed by sign flip. Verified by `tests/test_degradation_direction.py::test_margin_below_decreases_h_minus_y_c_over_t`. |
+
+### §7.4.12 ExpressionNeutrality
 
 | | OFIQ | Syngen |
 |---|---|---|
@@ -243,7 +243,7 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 | **Analyses / Perturbs** | **Face crop (CNN features)**: learned expression features from two EfficientNet models. HSEmotion-based. | **Face landmark geometry**: warps landmarks to create non-neutral facial configurations. The warped image changes what the CNNs see. |
 | **Alignment** | **MODERATE**. Landmark warping produces visible facial geometry changes, but OFIQ's CNNs were trained on real expression images. Whether geometric warping produces features that the AdaBoost classifier scores as non-neutral depends on how texture-vs-geometry sensitive the HSEmotion models are. |
 
-### 8.9 NoHeadCoverings
+### §7.4.13 NoHeadCoverings
 
 | | OFIQ | Syngen |
 |---|---|---|

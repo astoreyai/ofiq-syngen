@@ -20,48 +20,48 @@ For citation guidance, see [`../CITING.md`](../CITING.md).
 `-` = not covered yet.
 `?` = uncertainty flagged (verify against source standard).
 
-### Capture-related (S6.x)
+### Capture-related (FDIS §7.3)
 
 | Component | Section | Align | Conf | OFIQ src lines | Smoke | Determ | Sev change | Sev mono | Parity vec |
 |---|---|---|---|---|---|---|---|---|---|
-| BackgroundUniformity | S6.1 | exact | verified | BackgroundUniformity.cpp:55-168 | P | P | P | P | - |
-| IlluminationUniformity | S6.2 | exact | verified | IlluminationUniformity.cpp:1-113 | P | P | P | P | - |
-| LuminanceMean | S6.3 | exact | verified | Luminance.cpp:41-76 | P | P | P | P | - |
-| LuminanceVariance | S6.3 | partial | verified | Luminance.cpp:41-76 | P | P | P | P | - |
-| UnderExposurePrevention | S6.4 | exact | verified | UnderExposurePrevention.cpp:1-72 | P | P | P | P | - |
-| OverExposurePrevention | S6.4 | exact | verified | OverExposurePrevention.cpp:1-71 | P | P | P | P | - |
-| DynamicRange | S6.5 | partial | verified | DynamicRange.cpp:1-88 | P | P | P | P | - |
-| Sharpness (3 variants) | S6.6 | exact | verified | Sharpness.cpp:1-214 | P | P | P | P | - |
-| CompressionArtifacts | S6.7 | exact | verified | CompressionArtifacts.cpp:1-111 | P | P | P | P | - |
-| NaturalColour | S6.8 | exact | verified | NaturalColour.cpp:1-176 | P | P | P | P | - |
-| RadialDistortion | S6.9 | exact | verified | (not in OFIQ 1.1.0) | P | P | P | P | - |
+| BackgroundUniformity | §7.3.2 | exact | verified | BackgroundUniformity.cpp:55-168 | P | P | P | P | - |
+| IlluminationUniformity | §7.3.3 | exact | verified | IlluminationUniformity.cpp:1-113 | P | P | P | P | - |
+| LuminanceMean | §7.3.4.2 | exact | verified | Luminance.cpp:41-76 | P | P | P | P | - |
+| LuminanceVariance | §7.3.4.3 | partial | verified | Luminance.cpp:41-76 | P | P | P | P | - |
+| UnderExposurePrevention | §7.3.5 | exact | verified | UnderExposurePrevention.cpp:1-72 | P | P | P | P | - |
+| OverExposurePrevention | §7.3.6 | exact | verified | OverExposurePrevention.cpp:1-71 | P | P | P | P | - |
+| DynamicRange | §7.3.7 | partial | verified | DynamicRange.cpp:1-88 | P | P | P | P | - |
+| Sharpness (3 variants) | §7.3.8 | exact | verified | Sharpness.cpp:1-214 | P | P | P | P | - |
+| CompressionArtifacts | §7.3.9 | exact | verified | CompressionArtifacts.cpp:1-111 | P | P | P | P | - |
+| NaturalColour | §7.3.10 | exact | verified | NaturalColour.cpp:1-176 | P | P | P | P | - |
+| RadialDistortion | Annex D.2.1 | exact | verified | (not in OFIQ 1.1.0) | P | P | P | P | - |
 | SingleFacePresent | S6 ? | exact | uncertain | SingleFacePresent.cpp:1-100 | P | P | P | exempt | - |
 
-### Subject-related (S7.x)
+### Subject-related (FDIS §7.4)
 
 | Component | Section | Align | Conf | OFIQ src lines | Smoke | Determ | Sev change | Sev mono | Parity vec |
 |---|---|---|---|---|---|---|---|---|---|
-| EyesOpen | S7.2 | exact | verified | EyesOpen.cpp:1-61 | P | P | ctx-skip | ctx-skip | - |
-| MouthClosed | S7.3 | exact | verified | MouthClosed.cpp:1-70 | P | P | ctx-skip | ctx-skip | - |
-| EyesVisible | S7.4 | exact | verified | EyesVisible.cpp:1-123 | P | P | ctx-skip | ctx-skip | - |
-| MouthOcclusionPrevention | S7.5 | exact | verified | MouthOcclusionPrevention.cpp:1-67 | P | P | ctx-skip | ctx-skip | - |
-| FaceOcclusionPrevention | S7.6 | exact | verified | FaceOcclusionPrevention.cpp:1-74 | P | P | P | P | - |
-| InterEyeDistance | S7.7 | exact | verified | InterEyeDistance.cpp:1-71 | P | P | P | exempt | - |
-| HeadSize | S7.8 | exact | verified | HeadSize.cpp:1-61 | P | P | P | exempt | - |
-| ExpressionNeutrality | S7.9 ? | exact | uncertain | ExpressionNeutrality.cpp:1-154 | P | P | ctx-skip | ctx-skip | - |
-| NoHeadCoverings | S7.10 ? | partial | uncertain | NoHeadCoverings.cpp:1-123 | P | P | P | exempt | - |
+| EyesOpen | §7.4.3 | exact | verified | EyesOpen.cpp:1-61 | P | P | ctx-skip | ctx-skip | - |
+| MouthClosed | §7.4.4 | exact | verified | MouthClosed.cpp:1-70 | P | P | ctx-skip | ctx-skip | - |
+| EyesVisible | §7.4.5 | exact | verified | EyesVisible.cpp:1-123 | P | P | ctx-skip | ctx-skip | - |
+| MouthOcclusionPrevention | §7.4.6 | exact | verified | MouthOcclusionPrevention.cpp:1-67 | P | P | ctx-skip | ctx-skip | - |
+| FaceOcclusionPrevention | §7.4.7 | exact | verified | FaceOcclusionPrevention.cpp:1-74 | P | P | P | P | - |
+| InterEyeDistance | §7.4.8 | exact | verified | InterEyeDistance.cpp:1-71 | P | P | P | exempt | - |
+| HeadSize | §7.4.9 | exact | verified | HeadSize.cpp:1-61 | P | P | P | exempt | - |
+| ExpressionNeutrality | §7.4.12 | exact | uncertain | ExpressionNeutrality.cpp:1-154 | P | P | ctx-skip | ctx-skip | - |
+| NoHeadCoverings | §7.4.13 | partial | uncertain | NoHeadCoverings.cpp:1-123 | P | P | P | exempt | - |
 
 ### Geometric / pose (S8.x)
 
 | Component | Section | Align | Conf | OFIQ src lines | Smoke | Determ | Sev change | Sev mono | Parity vec |
 |---|---|---|---|---|---|---|---|---|---|
-| HeadPoseYaw | S8 | exact | verified | HeadPose.cpp:49-59 | P | P | P | P | - |
-| HeadPosePitch | S8 | exact | verified | HeadPose.cpp:49-59 | P | P | P | P | - |
-| HeadPoseRoll | S8 | exact | verified | HeadPose.cpp:49-59 | P | P | P | P | - |
-| LeftwardCropOfTheFaceImage | S8 | exact | verified | CropOfTheFaceImage.cpp:69-113 | P | P | P | exempt | - |
-| RightwardCropOfTheFaceImage | S8 | exact | verified | CropOfTheFaceImage.cpp:69-113 | P | P | P | exempt | - |
-| MarginAboveOfTheFaceImage | S8 | exact | verified | CropOfTheFaceImage.cpp:69-113 | P | P | P | exempt | - |
-| MarginBelowOfTheFaceImage | S8 | exact | verified | CropOfTheFaceImage.cpp:69-113 | P | P | P | exempt | - |
+| HeadPoseYaw | §7.4.11.2 | exact | verified | HeadPose.cpp:49-59 | P | P | P | P | - |
+| HeadPosePitch | §7.4.11.3 | exact | verified | HeadPose.cpp:49-59 | P | P | P | P | - |
+| HeadPoseRoll | §7.4.11.4 | exact | verified | HeadPose.cpp:49-59 | P | P | P | P | - |
+| LeftwardCropOfTheFaceImage | §7.4.10.1 | exact | verified | CropOfTheFaceImage.cpp:69-113 | P | P | P | exempt | - |
+| RightwardCropOfTheFaceImage | §7.4.10.2 | exact | verified | CropOfTheFaceImage.cpp:69-113 | P | P | P | exempt | - |
+| MarginAboveOfTheFaceImage | §7.4.10.3 | exact | verified | CropOfTheFaceImage.cpp:69-113 | P | P | P | exempt | - |
+| MarginBelowOfTheFaceImage | §7.4.10.4 | exact | verified | CropOfTheFaceImage.cpp:69-113 | P | P | P | exempt | - |
 
 ## Coverage rollup
 

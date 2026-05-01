@@ -13,7 +13,7 @@ measure class; line ranges below cover that method body. Helper utilities
 `OFIQlib/modules/landmarks/`, `OFIQlib/modules/utils/`, and the ONNX model
 loaders — those are catalogued in a separate provenance pass.
 
-## Capture-related (S6.x)
+## Capture-related (FDIS §7.3)
 
 | Component | OFIQ Source | Lines | Notes |
 |---|---|---|---|
@@ -30,7 +30,7 @@ loaders — those are catalogued in a separate provenance pass.
 | `RadialDistortion.scalar` | *(not in OFIQ 1.1.0)* | — | Forward-looking ISO 29794-5 component; no upstream measurement to align against. |
 | `SingleFacePresent.scalar` | `SingleFacePresent.cpp` | L1-L100 | Binary face count from ADNet detector. |
 
-## Subject-related (S7.x)
+## Subject-related (FDIS §7.4)
 
 | Component | OFIQ Source | Lines | Notes |
 |---|---|---|---|

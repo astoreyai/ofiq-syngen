@@ -35,7 +35,7 @@ against them.
   back to a context-free path that often produces no change. See
   per-component notes below.
 
-### Capture-related (S6.x)
+### Capture-related (FDIS §7.3)
 
 #### `BackgroundUniformity.scalar`
 
@@ -110,7 +110,7 @@ against them.
 - Score-monotonicity is not guaranteed because the inserted face's
   position is seed-dependent.
 
-### Subject-related (S7.x)
+### Subject-related (FDIS §7.4)
 
 #### `EyesOpen.scalar`, `MouthClosed.scalar`
 

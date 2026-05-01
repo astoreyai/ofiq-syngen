@@ -76,36 +76,38 @@ image (BGR uint8)
 
 ### 28 Registered Components
 
-| # | Component | ISO | Algorithm | Context? |
-|---|-----------|-----|-----------|----------|
-| 1 | `BackgroundUniformity.scalar` | S6.1 | Structured noise in BiSeNet background mask, eroded 4×4 | Yes |
-| 2 | `IlluminationUniformity.scalar` | S6.2 | Darken one of two landmark-derived ROI zones | Yes |
-| 3 | `LuminanceMean.scalar` | S6.3 | Multiplicative darkening within face mask | Yes |
-| 4 | `LuminanceVariance.scalar` | S6.3 | Per-channel compression toward face-region mean | Yes |
-| 5 | `UnderExposurePrevention.scalar` | S6.4 | Darkening within face mask ∩ occlusion mask | Yes |
-| 6 | `OverExposurePrevention.scalar` | S6.4 | Brightening within face mask | Yes |
-| 7 | `DynamicRange.scalar` | S6.5 | Pixel compression toward mid-gray (128) | No |
-| 8 | `Sharpness.scalar` | S6.6 | Gaussian blur / motion blur / Gaussian noise (3 variants) | No |
-| 9 | `CompressionArtifacts.scalar` | S6.7 | JPEG re-encoding at quality 5–100 | No |
-| 10 | `NaturalColour.scalar` | S6.8 | CIELAB a\*/b\* shift in landmark-derived ROI zones | Yes |
-| 11 | `RadialDistortion.scalar` | S6.9 | Barrel distortion via radial coefficient | No |
-| 12 | `SingleFacePresent.scalar` | S7.1 | Poisson-blended face insertion in background | Yes |
-| 13 | `EyesOpen.scalar` | S7.2 | RBF warp: upper eyelid → lower (pairs 61/67, 62/66, 63/65) | Yes |
-| 14 | `MouthClosed.scalar` | S7.3 | RBF warp: inner lip landmarks apart (pairs 89/95, 90/94, 91/93) | Yes |
-| 15 | `EyesVisible.scalar` | S7.4 | Dark occlusion within EVZ rectangles (IED/20 expansion) | Yes |
-| 16 | `MouthOcclusionPrevention.scalar` | S7.5 | Mask-colored fill within mouth polygon (landmarks 76–87) | Yes |
-| 17 | `FaceOcclusionPrevention.scalar` | S7.6 | Random rectangle within face mask convex hull | Yes |
-| 18 | `InterEyeDistance.scalar` | S7.7 | Pad-and-shrink (face smaller in frame) | No |
-| 19 | `HeadSize.scalar` | S7.8 | Pad-and-shrink (same mechanism as IED) | No |
-| 20 | `HeadPoseYaw.scalar` | S8 | Perspective warp (horizontal foreshortening) | No |
-| 21 | `HeadPosePitch.scalar` | S8 | Perspective warp (vertical foreshortening) | No |
-| 22 | `HeadPoseRoll.scalar` | S8 | In-plane affine rotation ±30° | No |
-| 23 | `LeftwardCropOfTheFaceImage.scalar` | S8 | Rightward image shift only | No |
-| 24 | `RightwardCropOfTheFaceImage.scalar` | S8 | Leftward image shift only | No |
-| 25 | `MarginAboveOfTheFaceImage.scalar` | S8 | Downward image shift only | No |
-| 26 | `MarginBelowOfTheFaceImage.scalar` | S8 | Upward image shift only | No |
-| 27 | `ExpressionNeutrality.scalar` | S8 | Landmark RBF warp (smile/surprise/frown) | Yes |
-| 28 | `NoHeadCoverings.scalar` | S8 | Fabric-textured hat overlay on forehead | Yes |
+Clause references follow ISO/IEC FDIS 29794-5:2024 (= IS:2025).
+
+| # | Component | FDIS § | Algorithm | Context? |
+|---|-----------|--------|-----------|----------|
+| 1 | `BackgroundUniformity.scalar` | §7.3.2 | Structured noise in BiSeNet background mask, eroded 4×4 | Yes |
+| 2 | `IlluminationUniformity.scalar` | §7.3.3 | Darken one of two landmark-derived ROI zones | Yes |
+| 3 | `LuminanceMean.scalar` | §7.3.4.2 | Multiplicative darkening within face mask | Yes |
+| 4 | `LuminanceVariance.scalar` | §7.3.4.3 | Per-channel compression toward face-region mean | Yes |
+| 5 | `UnderExposurePrevention.scalar` | §7.3.5 | Darkening within face mask ∩ occlusion mask | Yes |
+| 6 | `OverExposurePrevention.scalar` | §7.3.6 | Brightening within face mask | Yes |
+| 7 | `DynamicRange.scalar` | §7.3.7 | Pixel compression toward mid-gray (128) | No |
+| 8 | `Sharpness.scalar` | §7.3.8 | Gaussian blur / motion blur / Gaussian noise (3 variants) | No |
+| 9 | `CompressionArtifacts.scalar` | §7.3.9 | JPEG re-encoding at quality 5–100 | No |
+| 10 | `NaturalColour.scalar` | §7.3.10 | CIELAB a\*/b\* shift in landmark-derived ROI zones | Yes |
+| 11 | `RadialDistortion.scalar` | Annex D.2.1 | Barrel distortion via radial coefficient (no QAA in IS:2025) | No |
+| 12 | `SingleFacePresent.scalar` | §7.4.2 | Poisson-blended face insertion in background | Yes |
+| 13 | `EyesOpen.scalar` | §7.4.3 | RBF warp: upper eyelid → lower (pairs 61/67, 62/66, 63/65) | Yes |
+| 14 | `MouthClosed.scalar` | §7.4.4 | RBF warp: inner lip landmarks apart (pairs 89/95, 90/94, 91/93) | Yes |
+| 15 | `EyesVisible.scalar` | §7.4.5 | Dark occlusion within EVZ rectangles (IED/20 expansion) | Yes |
+| 16 | `MouthOcclusionPrevention.scalar` | §7.4.6 | Mask-colored fill within mouth polygon (landmarks 76–87) | Yes |
+| 17 | `FaceOcclusionPrevention.scalar` | §7.4.7 | Random rectangle within face mask convex hull | Yes |
+| 18 | `InterEyeDistance.scalar` | §7.4.8 | Pad-and-shrink (face smaller in frame) | No |
+| 19 | `HeadSize.scalar` | §7.4.9 | Pad-and-shrink (same mechanism as IED) | No |
+| 20 | `HeadPoseYaw.scalar` | §7.4.11.2 | Perspective warp (horizontal foreshortening) | No |
+| 21 | `HeadPosePitch.scalar` | §7.4.11.3 | Perspective warp (vertical foreshortening) | No |
+| 22 | `HeadPoseRoll.scalar` | §7.4.11.4 | In-plane affine rotation ±30° | No |
+| 23 | `LeftwardCropOfTheFaceImage.scalar` | §7.4.10.1 | Leftward image shift (face moves toward left edge; v0.4.0 fix) | No |
+| 24 | `RightwardCropOfTheFaceImage.scalar` | §7.4.10.2 | Rightward image shift (face moves toward right edge; v0.4.0 fix) | No |
+| 25 | `MarginAboveOfTheFaceImage.scalar` | §7.4.10.3 | Upward image shift (face moves toward top; v0.4.0 fix) | No |
+| 26 | `MarginBelowOfTheFaceImage.scalar` | §7.4.10.4 | Downward image shift (face moves toward bottom; v0.4.0 fix) | No |
+| 27 | `ExpressionNeutrality.scalar` | §7.4.12 | Landmark RBF warp (smile/surprise/frown) | Yes |
+| 28 | `NoHeadCoverings.scalar` | §7.4.13 | Fabric-textured hat overlay on forehead | Yes |
 
 ---
 
@@ -227,7 +229,7 @@ models = get_models()  # lazy-loaded, cached
 class ComponentDegradation:
     ofiq_component: str         # e.g. "Sharpness.scalar"
     function: Callable          # fn(img, severity, seed, ctx) -> img
-    description: str            # e.g. "Gaussian blur [S6.6]"
+    description: str            # e.g. "Gaussian blur [§7.3.8]"
     severity_range: str         # e.g. "sigma: 0.5 -> 10.5"
     requires_context: bool      # True if function needs FaceContext
 ```
@@ -392,7 +394,7 @@ from ofiq_syngen.standards import (
 
 refs = get_refs("Sharpness.scalar")
 print(refs.ofiq_section, refs.iso_29794_5, refs.icao_9303, refs.alignment)
-# S6.6  Sharpness (focus)  3.2.3 focus  exact
+# §7.3.8  Sharpness (focus)  3.2.3 focus  exact
 
 # All components with exact alignment to ICAO 9303 §3.2.3
 print(components_by_alignment("exact"))

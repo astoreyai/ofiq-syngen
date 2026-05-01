@@ -23,8 +23,13 @@ class StandardRefs:
     """Cross-standard references for a single OFIQ-aligned component.
 
     Attributes:
-        ofiq_section: OFIQ Algorithm Book section (e.g. 'S6.1').
-        iso_29794_5: Aspect name in ISO/IEC 29794-5:2024.
+        ofiq_section: ISO/IEC FDIS 29794-5:2024 (= IS:2025) clause reference
+            (e.g. '§7.3.2', '§7.4.10.1', or 'Annex D.2.1' for unmeasured
+            requirements). Updated 2026-04-30 from the legacy 'S6.x/S7.x/S8'
+            BSI Public Report numbering to the FDIS clause numbering used
+            in the published standard.
+        iso_29794_5: Aspect name in ISO/IEC 29794-5:2025 (matches FDIS
+            Table 6 algorithm identifier description column).
         iso_19794_5: Clause reference in ISO/IEC 19794-5:2011 (e.g. '8.9 lighting').
         icao_9303: Clause reference in ICAO 9303 Part 9 (e.g. '3.2.3 background').
         alignment: 'exact', 'partial', or 'absent'.
@@ -46,115 +51,115 @@ class StandardRefs:
 
 STANDARDS_REFS: dict[str, StandardRefs] = {
     "BackgroundUniformity.scalar": StandardRefs(
-        "S6.1", "Background uniformity", "8.9 lighting/scene",
+        "§7.3.2", "Background uniformity", "8.9 lighting/scene",
         "3.2.3 background", "exact", "verified",
     ),
     "IlluminationUniformity.scalar": StandardRefs(
-        "S6.2", "Illumination uniformity", "8.9 lighting",
+        "§7.3.3", "Illumination uniformity", "8.9 lighting",
         "3.2.3 lighting", "exact", "verified",
     ),
     "LuminanceMean.scalar": StandardRefs(
-        "S6.3", "Luminance mean", "8.9 exposure",
+        "§7.3.4.2", "Luminance mean", "8.9 exposure",
         "3.2.3 exposure", "exact", "verified",
     ),
     "LuminanceVariance.scalar": StandardRefs(
-        "S6.3", "Luminance variance", "8.9 exposure",
+        "§7.3.4.3", "Luminance variance", "8.9 exposure",
         "3.2.3 contrast", "partial", "verified",
     ),
     "UnderExposurePrevention.scalar": StandardRefs(
-        "S6.4", "Under-exposure prevention", "8.9 exposure",
+        "§7.3.5", "Under-exposure prevention", "8.9 exposure",
         "3.2.3 exposure", "exact", "verified",
     ),
     "OverExposurePrevention.scalar": StandardRefs(
-        "S6.4", "Over-exposure prevention", "8.9 exposure",
+        "§7.3.6", "Over-exposure prevention", "8.9 exposure",
         "3.2.3 exposure", "exact", "verified",
     ),
     "DynamicRange.scalar": StandardRefs(
-        "S6.5", "Dynamic range", "8.9 lighting",
+        "§7.3.7", "Dynamic range", "8.9 lighting",
         "3.2.3 contrast", "partial", "verified",
     ),
     "Sharpness.scalar": StandardRefs(
-        "S6.6", "Sharpness (focus)", "8.10 focus",
+        "§7.3.8", "Sharpness (focus)", "8.10 focus",
         "3.2.3 focus", "exact", "verified",
     ),
     "CompressionArtifacts.scalar": StandardRefs(
-        "S6.7", "Compression artifacts", "9.2 JPEG/JPEG2000",
+        "§7.3.9", "No compression artefacts", "9.2 JPEG/JPEG2000",
         "3.2.5 compression", "exact", "verified",
     ),
     "NaturalColour.scalar": StandardRefs(
-        "S6.8", "Natural colour", "9.1 colour space",
+        "§7.3.10", "Natural colour", "9.1 colour space",
         "3.2.4 true colour", "exact", "verified",
     ),
     "RadialDistortion.scalar": StandardRefs(
-        "S6.9", "Radial/lens distortion", "8.10 lens",
-        "3.2.3 lens distortion", "exact", "verified",
+        "Annex D.2.1", "Radial distortion (no QAA in IS:2025)", "8.10 lens",
+        "3.2.3 lens distortion", "partial", "verified",
     ),
     "SingleFacePresent.scalar": StandardRefs(
-        "S6", "Single face present", "8.1 subject",
+        "§7.4.2", "Single face present", "8.1 subject",
         "3.2.3 one subject", "exact", "uncertain",
     ),
     "EyesOpen.scalar": StandardRefs(
-        "S7.2", "Eyes open", "8.5 eye state",
+        "§7.4.3", "Eyes open", "8.5 eye state",
         "3.2.3 eyes open", "exact", "verified",
     ),
     "MouthClosed.scalar": StandardRefs(
-        "S7.3", "Mouth closed", "8.6 mouth state",
+        "§7.4.4", "Mouth closed", "8.6 mouth state",
         "3.2.3 mouth closed", "exact", "verified",
     ),
     "EyesVisible.scalar": StandardRefs(
-        "S7.4", "Eyes visible (no occlusion)", "8.7 eye occlusion",
+        "§7.4.5", "Eyes visible (no occlusion)", "8.7 eye occlusion",
         "3.2.3 no eye covering", "exact", "verified",
     ),
     "MouthOcclusionPrevention.scalar": StandardRefs(
-        "S7.5", "Mouth visible", "8.7 mouth occlusion",
+        "§7.4.6", "Mouth occlusion prevention", "8.7 mouth occlusion",
         "3.2.3 no mouth covering", "exact", "verified",
     ),
     "FaceOcclusionPrevention.scalar": StandardRefs(
-        "S7.6", "Face visible", "8.7 face occlusion",
+        "§7.4.7", "Face occlusion prevention", "8.7 face occlusion",
         "3.2.3 face visible", "exact", "verified",
     ),
     "InterEyeDistance.scalar": StandardRefs(
-        "S7.7", "Inter-eye distance", "9.3 resolution",
+        "§7.4.8", "Inter-eye distance", "9.3 resolution",
         "3.2.2 eye distance min", "exact", "verified",
     ),
     "HeadSize.scalar": StandardRefs(
-        "S7.8", "Head size in frame", "7.4 token formats",
+        "§7.4.9", "Head size", "7.4 token formats",
         "3.2.2 face size", "exact", "verified",
     ),
     "ExpressionNeutrality.scalar": StandardRefs(
-        "S7.9", "Neutral expression", "8.3 expression",
+        "§7.4.12", "Expression neutrality", "8.3 expression",
         "3.2.3 neutral expression", "exact", "uncertain",
     ),
     "NoHeadCoverings.scalar": StandardRefs(
-        "S7.10", "No head coverings", "8.8 head coverings",
+        "§7.4.13", "No head covering", "8.8 head coverings",
         "3.2.3 head coverings", "partial", "uncertain",
     ),
     "HeadPoseYaw.scalar": StandardRefs(
-        "S8", "Yaw", "8.2 pose",
+        "§7.4.11.2", "Head pose angle yaw frontal alignment", "8.2 pose",
         "3.2.3 frontal", "exact", "verified",
     ),
     "HeadPosePitch.scalar": StandardRefs(
-        "S8", "Pitch", "8.2 pose",
+        "§7.4.11.3", "Head pose angle pitch frontal alignment", "8.2 pose",
         "3.2.3 frontal", "exact", "verified",
     ),
     "HeadPoseRoll.scalar": StandardRefs(
-        "S8", "Roll", "8.2 pose",
+        "§7.4.11.4", "Head pose angle roll frontal alignment", "8.2 pose",
         "3.2.3 frontal", "exact", "verified",
     ),
     "LeftwardCropOfTheFaceImage.scalar": StandardRefs(
-        "S8", "Left margin", "7.4 token formats",
+        "§7.4.10.1", "Leftward crop of face in image", "7.4 token formats",
         "3.2.2 centring", "exact", "verified",
     ),
     "RightwardCropOfTheFaceImage.scalar": StandardRefs(
-        "S8", "Right margin", "7.4 token formats",
+        "§7.4.10.2", "Rightward crop of face in image", "7.4 token formats",
         "3.2.2 centring", "exact", "verified",
     ),
     "MarginAboveOfTheFaceImage.scalar": StandardRefs(
-        "S8", "Top margin", "7.4 token formats",
+        "§7.4.10.3", "Margin above face in image", "7.4 token formats",
         "3.2.2 head position", "exact", "verified",
     ),
     "MarginBelowOfTheFaceImage.scalar": StandardRefs(
-        "S8", "Bottom margin", "7.4 token formats",
+        "§7.4.10.4", "Margin below face in image", "7.4 token formats",
         "3.2.2 head position", "exact", "verified",
     ),
 }

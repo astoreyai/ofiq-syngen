@@ -20,7 +20,7 @@ from ofiq_syngen.components import (
     list_all_degradations,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "DegradationPipeline",

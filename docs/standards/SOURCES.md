@@ -26,7 +26,7 @@ listed here.
 |---|---|
 | Title | Information technology — Biometric sample quality — Part 5: Face image data |
 | Edition referenced | **ISO/IEC 29794-5:2024** (current published edition) |
-| OFIQ Algorithm Book section convention | `S6.x` = capture-related; `S7.x` = subject-related; `S8.x` = geometric/pose |
+| OFIQ Algorithm Book section convention | `§7.3.x` = capture-related; `§7.4.2`–`§7.4.13` = subject-related; `§7.4.10`–`§7.4.11` = geometric/pose; FDIS Annex D = quality requirements without a QAA |
 | Note | OFIQ's clause numbering follows the Algorithm Book, which tracks the standard's clause structure. The `S<n>.<m>` shorthand used in `README.md`, `ANALYSIS.md`, and the rest of this docs tree refers to those Algorithm Book sections. |
 
 ## ISO/IEC 19794-5 (face image data interchange format)

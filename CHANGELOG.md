@@ -2,6 +2,42 @@
 
 All notable changes to the ofiq-syngen package.
 
+## [0.4.0] - 2026-04-30
+
+### Fixed
+
+- **Critical**: 4 crop/margin operators (`_crop_left`, `_crop_right`,
+  `_margin_above`, `_margin_below`) shifted the image content in the
+  wrong direction. The OFIQ scalars they were meant to degrade
+  (LeftwardCrop, RightwardCrop, MarginAbove, MarginBelow) actually
+  *increased* under the buggy operators because the face moved away
+  from the relevant image edge instead of toward it. All four sign-
+  flipped to push the face toward the edge OFIQ measures distance to
+  (left edge for LeftwardCrop, right edge for RightwardCrop, etc.).
+  Verified by `tests/test_degradation_direction.py`.
+
+### Changed
+
+- `standards.py` and `docs/standards/MAPPING.csv`: `ofiq_section` field
+  migrated from BSI Public Report numbering (`S6.x` / `S7.x` / `S8`)
+  to the ISO/IEC FDIS 29794-5:2024 (= IS:2025) clause numbering
+  (`§7.3.x` / `§7.4.x` / `Annex D.2.1`). The BSI Public Report v1.2
+  numbering was an internal convention used during OFIQ development;
+  the published 2025 IS uses the new clause numbers.
+- All documentation (`README.md`, `USAGE.md`, `ANALYSIS.md`,
+  `docs/ISO_COVERAGE.md`, `docs/standards/{MAPPING,PROVENANCE,SOURCES}.md`,
+  `docs/theory/COMPONENT_STATUS.md`, `docs/FAILURE_MODES.md`) updated
+  to use FDIS clause numbering. Component descriptions in `ANALYSIS.md`
+  for the 4 crop/margin sections rewritten to reflect post-fix behavior.
+
+### Added
+
+- `tests/test_degradation_direction.py`: 30 TDD tests asserting that
+  each operator monotonically degrades its target OFIQ scalar. One
+  test xfails (Sharpness Gaussian noise — Laplace variance increases
+  with noise; whether OFIQ's RF interprets noise as "blurry" requires
+  OFIQ-binary parity verification).
+
 ## [0.3.3] - 2026-04-30
 
 ### Changed

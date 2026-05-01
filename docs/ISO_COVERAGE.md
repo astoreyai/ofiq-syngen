@@ -12,52 +12,52 @@ Per-component coverage of the components defined in ISO/IEC 29794-5:2024.
 
 ## Per-component status
 
-### Capture-related (Section 6)
+### Capture-related (FDIS §7.3)
 
 | Clause | Component | Status | Notes |
 |---|---|---|---|
-| S6.1 | BackgroundUniformity | implemented | exact alignment to OFIQ BiSeNet-segmented background |
-| S6.2 | IlluminationUniformity | implemented | exact alignment to OFIQ L/R ROI zones |
-| S6.3 | LuminanceMean | implemented | face-mask targeting |
-| S6.3 | LuminanceVariance | implemented | partial alignment (OFIQ uses face mask; degrader same region but different metric) |
-| S6.4 | UnderExposurePrevention | implemented | exact alignment to face mask intersect occlusion mask |
-| S6.4 | OverExposurePrevention | implemented | exact alignment to face mask |
-| S6.5 | DynamicRange | implemented | partial alignment |
-| S6.6 | Sharpness | implemented | three degraders: blur, motion blur, additive noise |
-| S6.7 | CompressionArtifacts | implemented | JPEG re-compression at variable quality |
-| S6.8 | NaturalColour | implemented | CIELAB shift in landmark ROI zones (or whole image without context) |
-| S6.9 | RadialDistortion | implemented (forward-looking) | no OFIQ measurement counterpart in v1.1.0 |
-| S6 ? | SingleFacePresent | implemented | OFIQ section number unverified; ICAO clause confirmed |
+| §7.3.2 | BackgroundUniformity | implemented | exact alignment to OFIQ BiSeNet-segmented background |
+| §7.3.3 | IlluminationUniformity | implemented | exact alignment to OFIQ L/R ROI zones |
+| §7.3.4.2 | LuminanceMean | implemented | face-mask targeting |
+| §7.3.4.3 | LuminanceVariance | implemented | partial alignment (OFIQ uses face mask; degrader same region but different metric) |
+| §7.3.5 | UnderExposurePrevention | implemented | exact alignment to face mask intersect occlusion mask |
+| §7.3.6 | OverExposurePrevention | implemented | exact alignment to face mask |
+| §7.3.7 | DynamicRange | implemented | partial alignment |
+| §7.3.8 | Sharpness | implemented | three degraders: blur, motion blur, additive noise |
+| §7.3.9 | CompressionArtifacts | implemented | JPEG re-compression at variable quality |
+| §7.3.10 | NaturalColour | implemented | CIELAB shift in landmark ROI zones (or whole image without context) |
+| Annex D.2.1 | RadialDistortion | implemented (forward-looking) | no OFIQ measurement counterpart in v1.1.0 |
+| §7.4.2 | SingleFacePresent | implemented | OFIQ section number unverified; ICAO clause confirmed |
 
-### Subject-related (Section 7)
+### Subject-related (FDIS §7.4)
 
 | Clause | Component | Status | Notes |
 |---|---|---|---|
-| S7.2 | EyesOpen | implemented | RBF landmark warp; requires FaceContext |
-| S7.3 | MouthClosed | implemented | RBF landmark warp; requires FaceContext |
-| S7.4 | EyesVisible | implemented | EVZ-rectangle occlusion |
-| S7.5 | MouthOcclusionPrevention | implemented | mouth-polygon occlusion |
-| S7.6 | FaceOcclusionPrevention | implemented | face-mask-constrained rectangular occlusion |
-| S7.7 | InterEyeDistance | implemented | pad-and-shrink to reduce IED |
-| S7.8 | HeadSize | implemented | pad-and-shrink to reduce face proportion |
-| S7.9 ? | ExpressionNeutrality | implemented | OFIQ section unverified; landmark warp |
-| S7.10 ? | NoHeadCoverings | implemented | partial alignment (no religious/medical exemption modeling) |
+| §7.4.3 | EyesOpen | implemented | RBF landmark warp; requires FaceContext |
+| §7.4.4 | MouthClosed | implemented | RBF landmark warp; requires FaceContext |
+| §7.4.5 | EyesVisible | implemented | EVZ-rectangle occlusion |
+| §7.4.6 | MouthOcclusionPrevention | implemented | mouth-polygon occlusion |
+| §7.4.7 | FaceOcclusionPrevention | implemented | face-mask-constrained rectangular occlusion |
+| §7.4.8 | InterEyeDistance | implemented | pad-and-shrink to reduce IED |
+| §7.4.9 | HeadSize | implemented | pad-and-shrink to reduce face proportion |
+| §7.4.12 | ExpressionNeutrality | implemented | OFIQ section unverified; landmark warp |
+| §7.4.13 | NoHeadCoverings | implemented | partial alignment (no religious/medical exemption modeling) |
 
 ### Geometric / pose (Section 8)
 
 | Clause | Component | Status | Notes |
 |---|---|---|---|
-| S8 | HeadPoseYaw | implemented | perspective warp (not true 3D); MODERATE algorithm fidelity |
-| S8 | HeadPosePitch | implemented | perspective warp (not true 3D); MODERATE algorithm fidelity |
-| S8 | HeadPoseRoll | implemented | exact 2D rotation |
-| S8 | LeftwardCropOfTheFaceImage | implemented | exact directional shift |
-| S8 | RightwardCropOfTheFaceImage | implemented | exact directional shift |
-| S8 | MarginAboveOfTheFaceImage | implemented | exact directional shift |
-| S8 | MarginBelowOfTheFaceImage | implemented | exact directional shift |
+| §7.4.11.2 | HeadPoseYaw | implemented | perspective warp (not true 3D); MODERATE algorithm fidelity |
+| §7.4.11.3 | HeadPosePitch | implemented | perspective warp (not true 3D); MODERATE algorithm fidelity |
+| §7.4.11.4 | HeadPoseRoll | implemented | exact 2D rotation |
+| §7.4.10.1 | LeftwardCropOfTheFaceImage | implemented | exact directional shift |
+| §7.4.10.2 | RightwardCropOfTheFaceImage | implemented | exact directional shift |
+| §7.4.10.3 | MarginAboveOfTheFaceImage | implemented | exact directional shift |
+| §7.4.10.4 | MarginBelowOfTheFaceImage | implemented | exact directional shift |
 
 ## Where the package extends beyond OFIQ 1.1.0
 
-`RadialDistortion.scalar` (S6.9) implements perturbation for a component
+`RadialDistortion.scalar` (Annex D.2.1) implements perturbation for a component
 defined in ISO/IEC 29794-5:2024 but not yet measured in OFIQ 1.1.0. When
 OFIQ adds the corresponding measurement, the degrader is ready.
 

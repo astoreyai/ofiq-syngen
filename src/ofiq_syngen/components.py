@@ -707,12 +707,15 @@ def _roll_rotation(
 def _crop_left(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Shift image RIGHT to reduce left margin [S8 LeftwardCrop].
+    """Shift image LEFT to push face toward left edge (degrades LeftwardCrop) [§7.4.10.1].
 
-    OFIQ measures: rightEyeCenter.x / IED.
+    OFIQ measures q_l = rightEyeCenter.x / IED. To DEGRADE this scalar we
+    must DECREASE q_l, which means moving the face toward the LEFT edge of
+    the image (small X_R). cv2.warpAffine with NEGATIVE shift_x translates
+    the source image content LEFT.
     """
     h, w = img.shape[:2]
-    shift_x = int(severity * w * 0.4)
+    shift_x = -int(severity * w * 0.4)  # negative = content moves left = face moves left
     M = np.float32([[1, 0, shift_x], [0, 1, 0]])
     return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
 
@@ -720,12 +723,14 @@ def _crop_left(
 def _crop_right(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Shift image LEFT to reduce right margin [S8 RightwardCrop].
+    """Shift image RIGHT to push face toward right edge (degrades RightwardCrop) [§7.4.10.2].
 
-    OFIQ measures: (imgW - leftEyeCenter.x) / IED.
+    OFIQ measures q_r = (imgW - leftEyeCenter.x) / IED. To DEGRADE this scalar
+    we must DECREASE q_r, which means moving the face toward the RIGHT edge
+    of the image (X_L close to imgW). Positive shift_x translates content RIGHT.
     """
     h, w = img.shape[:2]
-    shift_x = -int(severity * w * 0.4)
+    shift_x = int(severity * w * 0.4)  # positive = content moves right = face moves right
     M = np.float32([[1, 0, shift_x], [0, 1, 0]])
     return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
 
@@ -733,12 +738,14 @@ def _crop_right(
 def _margin_above(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Shift image DOWN to reduce top margin [S8 MarginAbove].
+    """Shift image UP to push face toward top edge (degrades MarginAbove) [§7.4.10.3].
 
-    OFIQ measures: eyeMidPoint.y / t.
+    OFIQ measures q_a = eyeMidPoint.y / t. To DEGRADE this scalar we must
+    DECREASE q_a, which means moving the face toward the TOP of the image
+    (small Y_C). Negative shift_y translates content UP.
     """
     h, w = img.shape[:2]
-    shift_y = int(severity * h * 0.4)
+    shift_y = -int(severity * h * 0.4)  # negative = content moves up = face moves up
     M = np.float32([[1, 0, 0], [0, 1, shift_y]])
     return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
 
@@ -746,12 +753,14 @@ def _margin_above(
 def _margin_below(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Shift image UP to reduce bottom margin [S8 MarginBelow].
+    """Shift image DOWN to push face toward bottom edge (degrades MarginBelow) [§7.4.10.4].
 
-    OFIQ measures: (imgH - eyeMidPoint.y) / t.
+    OFIQ measures q_b = (imgH - eyeMidPoint.y) / t. To DEGRADE this scalar
+    we must DECREASE q_b, which means moving the face toward the BOTTOM of
+    the image (Y_C close to imgH). Positive shift_y translates content DOWN.
     """
     h, w = img.shape[:2]
-    shift_y = -int(severity * h * 0.4)
+    shift_y = int(severity * h * 0.4)  # positive = content moves down = face moves down
     M = np.float32([[1, 0, 0], [0, 1, shift_y]])
     return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
 
