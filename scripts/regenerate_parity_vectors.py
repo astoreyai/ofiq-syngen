@@ -50,22 +50,25 @@ def _run_ofiq(binary: Path, image_path: Path) -> dict[str, float]:
     The OFIQ sample app produces a CSV per input. We pipe a single-image
     listing through it and parse the result.
     """
+    # OFIQ 1.1.0 SampleApp: -c <configDir> -i <inputFile|Dir> -o <outputFile>
+    # No -l (list) flag; invoke per image.
+    config_dir = Path(
+        "/mnt/projects/02_perception_biometrics/OFIQ-Project/data"
+    )
     with tempfile.TemporaryDirectory() as td:
-        td_path = Path(td)
-        list_path = td_path / "list.csv"
-        list_path.write_text(str(image_path) + "\n")
-        out_csv = td_path / "scores.csv"
+        out_csv = Path(td) / "scores.csv"
         cmd = [
             str(binary),
-            "-l", str(list_path),
+            "-c", str(config_dir),
+            "-i", str(image_path),
             "-o", str(out_csv),
         ]
         subprocess.run(cmd, check=True, capture_output=True)
-        rows = list(csv.DictReader(out_csv.open()))
+        # OFIQ outputs semicolon-separated CSV
+        rows = list(csv.DictReader(out_csv.open(), delimiter=";"))
         if not rows:
             raise RuntimeError(f"OFIQ binary produced no rows for {image_path}")
         # Parse: keys are component names, values are stringified floats.
-        # OFIQ CSVs typically have one row per image with all component columns.
         out = {}
         for k, v in rows[0].items():
             try:

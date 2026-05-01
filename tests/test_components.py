@@ -59,10 +59,12 @@ class TestComponentRegistry:
             assert isinstance(desc, str)
 
     def test_section_references(self):
-        """Every degradation must reference its OFIQ section."""
+        """Every degradation must reference its FDIS:2024 clause (or Annex)."""
         for comp, degs in COMPONENT_REGISTRY.items():
             for d in degs:
-                assert "[S" in d.description, f"{comp}: missing section ref in '{d.description}'"
+                assert "[§" in d.description or "[Annex" in d.description, (
+                    f"{comp}: missing FDIS clause ref in '{d.description}'"
+                )
 
     def test_context_flag_consistency(self):
         """Context-requiring components should have requires_context=True."""

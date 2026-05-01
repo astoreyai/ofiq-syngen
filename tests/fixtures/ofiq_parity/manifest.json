@@ -1,11 +1,220 @@
 {
-  "schema_version": "1",
+  "generated_at": "2026-05-01T00:50:30.735820Z",
+  "generator_script": "scripts/regenerate_parity_vectors.py",
+  "image_set": [
+    {
+      "id": "20160518023P_Front[1]",
+      "path": "images/20160518023P_Front[1].jpg",
+      "sha256": "5effffb1ef8187787b67bf2adb481405b354ff55c3632285911b8e0224c957e5"
+    },
+    {
+      "id": "20160518031L_Front[1]",
+      "path": "images/20160518031L_Front[1].jpg",
+      "sha256": "ccc0e7e9bf79628408b8fe864267f9fa7a060a8db7f50333304411d30e5e60fc"
+    },
+    {
+      "id": "20221010011Q_Front[1]",
+      "path": "images/20221010011Q_Front[1].jpg",
+      "sha256": "00d4e09d6626111ad94b8166d3a5ff6499dcac846c3e3074394ecd0a275a8123"
+    }
+  ],
   "ofiq_version": "1.1.0",
-  "syngen_version": "0.3.0",
+  "schema_version": "1",
+  "syngen_version": "0.4.0",
   "tolerance": 5.0,
   "tolerance_units": "raw OFIQ score (0-100)",
-  "generated_at": null,
-  "generator_script": "scripts/regenerate_parity_vectors.py",
-  "image_set": [],
-  "vectors": []
+  "vectors": [
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "expected_score": 100.0,
+      "image_id": "20160518023P_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "expected_score": 99.0,
+      "image_id": "20160518023P_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward shift [S8 CropRight]",
+      "expected_score": 100.0,
+      "image_id": "20160518023P_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward shift [S8 CropRight]",
+      "expected_score": 100.0,
+      "image_id": "20160518023P_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Downward shift [S8 MarginAbove]",
+      "expected_score": 99.0,
+      "image_id": "20160518023P_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Downward shift [S8 MarginAbove]",
+      "expected_score": 0.0,
+      "image_id": "20160518023P_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "expected_score": 100.0,
+      "image_id": "20160518023P_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "expected_score": 1.0,
+      "image_id": "20160518023P_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "expected_score": 100.0,
+      "image_id": "20160518031L_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "expected_score": 92.0,
+      "image_id": "20160518031L_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward shift [S8 CropRight]",
+      "expected_score": 100.0,
+      "image_id": "20160518031L_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward shift [S8 CropRight]",
+      "expected_score": 100.0,
+      "image_id": "20160518031L_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Downward shift [S8 MarginAbove]",
+      "expected_score": 80.0,
+      "image_id": "20160518031L_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Downward shift [S8 MarginAbove]",
+      "expected_score": -1.0,
+      "image_id": "20160518031L_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "expected_score": 100.0,
+      "image_id": "20160518031L_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "expected_score": 1.0,
+      "image_id": "20160518031L_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "expected_score": 100.0,
+      "image_id": "20221010011Q_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward shift [S8 CropLeft]",
+      "expected_score": 100.0,
+      "image_id": "20221010011Q_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward shift [S8 CropRight]",
+      "expected_score": 100.0,
+      "image_id": "20221010011Q_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward shift [S8 CropRight]",
+      "expected_score": 86.0,
+      "image_id": "20221010011Q_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Downward shift [S8 MarginAbove]",
+      "expected_score": 100.0,
+      "image_id": "20221010011Q_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MarginAboveOfTheFaceImage.scalar",
+      "degradation_type": "Downward shift [S8 MarginAbove]",
+      "expected_score": 1.0,
+      "image_id": "20221010011Q_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "expected_score": 1.0,
+      "image_id": "20221010011Q_Front[1]",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MarginBelowOfTheFaceImage.scalar",
+      "degradation_type": "Upward shift [S8 MarginBelow]",
+      "expected_score": -1.0,
+      "image_id": "20221010011Q_Front[1]",
+      "seed": 42,
+      "severity": 1.0
+    }
+  ]
 }

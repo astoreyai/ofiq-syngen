@@ -49,7 +49,7 @@ class ComponentDegradation:
 def _background_clutter_segmented(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Add structured noise to the segmented background region [S6.1].
+    """Add structured noise to the segmented background region [§7.3.2].
 
     OFIQ measures Sobel gradient magnitude on the BiSeNet-segmented
     background (class 0), eroded with a 4x4 kernel. We add edge-creating
@@ -128,7 +128,7 @@ def _background_clutter_fallback(
 def _uneven_illumination_roi(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Darken one ROI zone to create left-right illumination asymmetry [S6.2].
+    """Darken one ROI zone to create left-right illumination asymmetry [§7.3.3].
 
     OFIQ measures histogram intersection between left and right ROI zones
     (computed from eye centers and IED). We darken one zone to reduce the
@@ -176,7 +176,7 @@ def _uneven_illumination_fallback(
 def _darken_face(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Darken within the face mask region [S6.3, S6.4].
+    """Darken within the face mask region [§7.3.4 / §7.3.5/§7.3.6].
 
     OFIQ measures luminance histogram within the face landmark mask.
     """
@@ -192,7 +192,7 @@ def _darken_face(
 def _darken_face_with_occlusion(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Darken within face mask AND occlusion mask [S6.4 UnderExposure].
+    """Darken within face mask AND occlusion mask [§7.3.5 UnderExposure].
 
     OFIQ's CalculateExposure uses bitwise_and(faceMask, occlusionMask).
     """
@@ -209,7 +209,7 @@ def _darken_face_with_occlusion(
 def _brighten_face(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Brighten within the face mask region [S6.4 OverExposure].
+    """Brighten within the face mask region [§7.3.6 OverExposure].
 
     Pushes face pixels toward luminance 247-255 range.
     """
@@ -225,7 +225,7 @@ def _brighten_face(
 def _reduce_luminance_variance_face(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Compress luminance variance within face region [S6.3].
+    """Compress luminance variance within face region [§7.3.4].
 
     OFIQ measures luminance histogram variance within the face mask.
     """
@@ -251,7 +251,7 @@ def _reduce_luminance_variance_face(
 def _reduce_dynamic_range(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Compress dynamic range toward mid-gray [S6.5]. Keep as-is (EXCELLENT fidelity)."""
+    """Compress dynamic range toward mid-gray [§7.3.7]. Keep as-is (EXCELLENT fidelity)."""
     mid = 128.0
     factor = 1.0 - severity * 0.9
     return np.clip(mid + (img.astype(np.float32) - mid) * factor, 0, 255).astype(np.uint8)
@@ -260,7 +260,7 @@ def _reduce_dynamic_range(
 def _blur(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Gaussian blur [S6.6]. Keep as-is (EXCELLENT fidelity)."""
+    """Gaussian blur [§7.3.8]. Keep as-is (EXCELLENT fidelity)."""
     sigma = severity * 10.0 + 0.5
     ksize = int(6 * sigma + 1) | 1
     return cv2.GaussianBlur(img, (ksize, ksize), sigma)
@@ -269,7 +269,7 @@ def _blur(
 def _motion_blur(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Motion blur [S6.6]. Keep as-is (EXCELLENT fidelity)."""
+    """Motion blur [§7.3.8]. Keep as-is (EXCELLENT fidelity)."""
     ksize = max(int(severity * 30) + 1, 3)
     kernel = np.zeros((ksize, ksize))
     rng = np.random.RandomState(seed)
@@ -287,7 +287,7 @@ def _motion_blur(
 def _gaussian_noise(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Additive Gaussian noise [S6.6]. Keep as-is (EXCELLENT fidelity)."""
+    """Additive Gaussian noise [§7.3.8]. Keep as-is (EXCELLENT fidelity)."""
     rng = np.random.RandomState(seed)
     sigma = severity * 80
     noise = rng.randn(*img.shape) * sigma
@@ -297,7 +297,7 @@ def _gaussian_noise(
 def _jpeg_compression(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """JPEG re-encoding [S6.7]. Keep as-is (EXCELLENT fidelity)."""
+    """JPEG re-encoding [§7.3.9]. Keep as-is (EXCELLENT fidelity)."""
     quality = max(int((1 - severity) * 95) + 5, 1)
     _, buf = cv2.imencode(".jpg", img, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
     return cv2.imdecode(buf, cv2.IMREAD_COLOR)
@@ -306,7 +306,7 @@ def _jpeg_compression(
 def _color_cast_cielab(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Push skin color outside natural CIELAB range in the ROI zones [S6.8].
+    """Push skin color outside natural CIELAB range in the ROI zones [§7.3.10].
 
     OFIQ measures CIELAB distance from ideal ranges a* in [5,25], b* in [5,35]
     in the left/right ROI zones. We shift chromaticity within those zones.
@@ -359,7 +359,7 @@ def _color_cast_fallback(
 def _radial_distortion(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Barrel/pincushion distortion [S6.9]. Keep as-is."""
+    """Barrel/pincushion distortion [Annex D.2.1]. Keep as-is."""
     h, w = img.shape[:2]
     cx, cy = w / 2, h / 2
     k = severity * 0.5
@@ -380,7 +380,7 @@ def _radial_distortion(
 def _eyes_close_warp(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Warp upper eyelid landmarks toward lower to simulate eye closure [S7.2].
+    """Warp upper eyelid landmarks toward lower to simulate eye closure [§7.4.3].
 
     OFIQ measures min(max_pair_dist(LEFT_EYE), max_pair_dist(RIGHT_EYE)) / t.
     Pairs: Left=(61,67),(62,66),(63,65); Right=(69,75),(70,74),(71,73).
@@ -411,7 +411,7 @@ def _eyes_close_warp(
 def _mouth_open_warp(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Warp inner lip landmarks apart to simulate mouth opening [S7.3].
+    """Warp inner lip landmarks apart to simulate mouth opening [§7.4.4].
 
     OFIQ measures max_pair_dist(MOUTH_INNER_pairs) / t.
     Pairs: (89,95),(90,94),(91,93).
@@ -451,7 +451,7 @@ def _mouth_open_warp(
 def _eye_occlusion_evz(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Occlude within the Eye Visibility Zone [S7.4].
+    """Occlude within the Eye Visibility Zone [§7.4.5].
 
     OFIQ measures occlusion proportion within EVZ rectangles
     (eye bounding rect expanded by floor(IED/20) pixels).
@@ -498,7 +498,7 @@ def _eye_occlusion_fallback(
 def _mouth_occlusion_polygon(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Occlude within the mouth landmark polygon [S7.5].
+    """Occlude within the mouth landmark polygon [§7.4.6].
 
     OFIQ measures occlusion proportion within the convex polygon
     of mouth outer landmarks [76..87].
@@ -550,7 +550,7 @@ def _mouth_occlusion_fallback(
 def _face_region_occlusion(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Place rectangular occlusion within the face mask region [S7.6].
+    """Place rectangular occlusion within the face mask region [§7.4.7].
 
     OFIQ measures occlusion proportion over the full face landmark mask.
     """
@@ -611,7 +611,7 @@ def _rect_occlusion_fallback(
 def _reduce_ied(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Shrink face in frame to reduce inter-eye distance [S7.7].
+    """Shrink face in frame to reduce inter-eye distance [§7.4.8].
 
     OFIQ measures euclidean distance between eye centers (pixels) / cos(yaw).
     Downscale-and-upscale doesn't change this on aligned crops.
@@ -647,7 +647,7 @@ def _reduce_ied(
 def _reduce_head_size(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Shrink face in frame to reduce t/imageHeight ratio [S7.8].
+    """Shrink face in frame to reduce t/imageHeight ratio [§7.4.9].
 
     OFIQ measures |t/imageHeight - 0.45| (optimal ~0.45).
     Same pad-and-shrink mechanism as IED.
@@ -662,7 +662,7 @@ def _reduce_head_size(
 def _yaw_rotation(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Simulated yaw via perspective warp [S8]. Kept with calibration note."""
+    """Simulated yaw via perspective warp [§7.4.11 yaw/pitch/roll]. Kept with calibration note."""
     h, w = img.shape[:2]
     rng = np.random.RandomState(seed)
     direction = rng.choice([-1, 1])
@@ -679,7 +679,7 @@ def _yaw_rotation(
 def _pitch_tilt(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Simulated pitch via perspective warp [S8]. Kept with calibration note."""
+    """Simulated pitch via perspective warp [§7.4.11 yaw/pitch/roll]. Kept with calibration note."""
     h, w = img.shape[:2]
     rng = np.random.RandomState(seed)
     direction = rng.choice([-1, 1])
@@ -696,7 +696,7 @@ def _pitch_tilt(
 def _roll_rotation(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """In-plane rotation [S8]. Keep as-is (EXCELLENT fidelity)."""
+    """In-plane rotation [§7.4.11 yaw/pitch/roll]. Keep as-is (EXCELLENT fidelity)."""
     h, w = img.shape[:2]
     rng = np.random.RandomState(seed)
     angle = severity * 30 * rng.choice([-1, 1])
@@ -846,47 +846,47 @@ def _register(component: str, fn, desc: str, srange: str, needs_ctx: bool = Fals
 
 # S6.1 Background Uniformity
 _register("BackgroundUniformity.scalar", _background_clutter_segmented,
-          "Segmented background noise [S6.1]", "gradient: 0 -> 200", needs_ctx=True)
+          "Segmented background noise [§7.3.2]", "gradient: 0 -> 200", needs_ctx=True)
 
 # S6.2 Illumination Uniformity
 _register("IlluminationUniformity.scalar", _uneven_illumination_roi,
-          "ROI illumination asymmetry [S6.2]", "factor: 1.0 -> 0.2", needs_ctx=True)
+          "ROI illumination asymmetry [§7.3.3]", "factor: 1.0 -> 0.2", needs_ctx=True)
 
 # S6.3 Moments of Luminance Distribution
 _register("LuminanceMean.scalar", _darken_face,
-          "Face-masked darkening [S6.3]", "factor: 1.0 -> 0.15", needs_ctx=True)
+          "Face-masked darkening [§7.3.4]", "factor: 1.0 -> 0.15", needs_ctx=True)
 _register("LuminanceVariance.scalar", _reduce_luminance_variance_face,
-          "Face-masked variance compression [S6.3]", "factor: 1.0 -> 0.1", needs_ctx=True)
+          "Face-masked variance compression [§7.3.4]", "factor: 1.0 -> 0.1", needs_ctx=True)
 
 # S6.4 Over- and Under-Exposure Prevention
 _register("UnderExposurePrevention.scalar", _darken_face_with_occlusion,
-          "Face+occlusion masked under-exposure [S6.4]", "factor: 1.0 -> 0.15", needs_ctx=True)
+          "Face+occlusion masked under-exposure [§7.3.5]", "factor: 1.0 -> 0.15", needs_ctx=True)
 _register("OverExposurePrevention.scalar", _brighten_face,
-          "Face-masked over-exposure [S6.4]", "factor: 1.0 -> 3.5", needs_ctx=True)
+          "Face-masked over-exposure [§7.3.6]", "factor: 1.0 -> 3.5", needs_ctx=True)
 
 # S6.5 Dynamic Range
 _register("DynamicRange.scalar", _reduce_dynamic_range,
-          "Dynamic range compression [S6.5]", "range: 100% -> 10%")
+          "Dynamic range compression [§7.3.7]", "range: 100% -> 10%")
 
 # S6.6 Sharpness
 _register("Sharpness.scalar", _blur,
-          "Gaussian blur [S6.6]", "sigma: 0.5 -> 10.5")
+          "Gaussian blur [§7.3.8]", "sigma: 0.5 -> 10.5")
 _register("Sharpness.scalar", _motion_blur,
-          "Motion blur [S6.6]", "kernel: 3 -> 31px")
+          "Motion blur [§7.3.8]", "kernel: 3 -> 31px")
 _register("Sharpness.scalar", _gaussian_noise,
-          "Additive Gaussian noise [S6.6]", "sigma: 0 -> 80")
+          "Additive Gaussian noise [§7.3.8]", "sigma: 0 -> 80")
 
 # S6.7 No Compression Artefacts
 _register("CompressionArtifacts.scalar", _jpeg_compression,
-          "JPEG compression [S6.7]", "Q: 100 -> 5")
+          "JPEG compression [§7.3.9]", "Q: 100 -> 5")
 
 # S6.8 Natural Colour
 _register("NaturalColour.scalar", _color_cast_cielab,
-          "CIELAB color shift in ROI zones [S6.8]", "shift: 0 -> 60", needs_ctx=True)
+          "CIELAB color shift in ROI zones [§7.3.10]", "shift: 0 -> 60", needs_ctx=True)
 
 # S6.9 Radial Distortion Prevention
 _register("RadialDistortion.scalar", _radial_distortion,
-          "Barrel distortion [S6.9]", "k: 0 -> 0.5")
+          "Barrel distortion [Annex D.2.1]", "k: 0 -> 0.5")
 
 # === Subject-related (OFIQ Report Section 7) ===
 
@@ -895,51 +895,51 @@ _register("RadialDistortion.scalar", _radial_distortion,
 
 # S7.2 Eyes Open
 _register("EyesOpen.scalar", _eyes_close_warp,
-          "Landmark-warped eye closure [S7.2]", "closure: 0% -> 90%", needs_ctx=True)
+          "Landmark-warped eye closure [§7.4.3]", "closure: 0% -> 90%", needs_ctx=True)
 
 # S7.3 Mouth Closed
 _register("MouthClosed.scalar", _mouth_open_warp,
-          "Landmark-warped mouth opening [S7.3]", "opening: 0 -> 0.25t", needs_ctx=True)
+          "Landmark-warped mouth opening [§7.4.4]", "opening: 0 -> 0.25t", needs_ctx=True)
 
 # S7.4 Eyes Visible
 _register("EyesVisible.scalar", _eye_occlusion_evz,
-          "EVZ-targeted eye occlusion [S7.4]", "coverage: 0% -> 80%", needs_ctx=True)
+          "EVZ-targeted eye occlusion [§7.4.5]", "coverage: 0% -> 80%", needs_ctx=True)
 
 # S7.5 Mouth Occlusion Prevention
 _register("MouthOcclusionPrevention.scalar", _mouth_occlusion_polygon,
-          "Polygon-targeted mouth occlusion [S7.5]", "coverage: 0% -> 100%", needs_ctx=True)
+          "Polygon-targeted mouth occlusion [§7.4.6]", "coverage: 0% -> 100%", needs_ctx=True)
 
 # S7.6 Face Occlusion Prevention
 _register("FaceOcclusionPrevention.scalar", _face_region_occlusion,
-          "Face-masked rectangular occlusion [S7.6]", "area: 0% -> 60%", needs_ctx=True)
+          "Face-masked rectangular occlusion [§7.4.7]", "area: 0% -> 60%", needs_ctx=True)
 
 # S7.7 Inter-Eye Distance
 _register("InterEyeDistance.scalar", _reduce_ied,
-          "Pad-and-shrink to reduce IED [S7.7]", "scale: 1.0 -> 0.3")
+          "Pad-and-shrink to reduce IED [§7.4.8]", "scale: 1.0 -> 0.3")
 
 # S7.8 Head Size
 _register("HeadSize.scalar", _reduce_head_size,
-          "Pad-and-shrink to reduce head size [S7.8]", "scale: 1.0 -> 0.3")
+          "Pad-and-shrink to reduce head size [§7.4.9]", "scale: 1.0 -> 0.3")
 
 # === Geometric (OFIQ Report Sections 8+) ===
 
 # Head Pose
 _register("HeadPoseYaw.scalar", _yaw_rotation,
-          "Perspective yaw rotation [S8]", "squeeze: 0% -> 50%")
+          "Perspective yaw rotation [§7.4.11 yaw/pitch/roll]", "squeeze: 0% -> 50%")
 _register("HeadPosePitch.scalar", _pitch_tilt,
-          "Perspective pitch tilt [S8]", "squeeze: 0% -> 40%")
+          "Perspective pitch tilt [§7.4.11 yaw/pitch/roll]", "squeeze: 0% -> 40%")
 _register("HeadPoseRoll.scalar", _roll_rotation,
-          "In-plane rotation [S8]", "angle: 0 -> +/-30 deg")
+          "In-plane rotation [§7.4.11 yaw/pitch/roll]", "angle: 0 -> +/-30 deg")
 
 # Crop / margins (4 separate directional functions)
 _register("LeftwardCropOfTheFaceImage.scalar", _crop_left,
-          "Rightward shift [S8 CropLeft]", "shift: 0% -> 40%")
+          "Leftward image shift (face toward left edge) [§7.4.10.1]", "shift: 0% -> 40%")
 _register("RightwardCropOfTheFaceImage.scalar", _crop_right,
-          "Leftward shift [S8 CropRight]", "shift: 0% -> 40%")
+          "Rightward image shift (face toward right edge) [§7.4.10.2]", "shift: 0% -> 40%")
 _register("MarginAboveOfTheFaceImage.scalar", _margin_above,
-          "Downward shift [S8 MarginAbove]", "shift: 0% -> 40%")
+          "Upward image shift (face toward top) [§7.4.10.3]", "shift: 0% -> 40%")
 _register("MarginBelowOfTheFaceImage.scalar", _margin_below,
-          "Upward shift [S8 MarginBelow]", "shift: 0% -> 40%")
+          "Downward image shift (face toward bottom) [§7.4.10.4]", "shift: 0% -> 40%")
 
 # === Generative components (Section 7.1, Section 8) ===
 
@@ -948,13 +948,13 @@ from ofiq_syngen.generative.expression import add_expression
 from ofiq_syngen.generative.head_covering import add_head_covering
 
 _register("SingleFacePresent.scalar", insert_second_face,
-          "Face insertion via Poisson blending [S7.1]",
+          "Face insertion via Poisson blending [§7.4.2]",
           "area ratio: 0 -> 0.4", needs_ctx=True)
 _register("ExpressionNeutrality.scalar", add_expression,
-          "Landmark-warped expression [S8]",
+          "Landmark-warped expression [§7.4.11 yaw/pitch/roll]",
           "displacement: 0 -> 0.15t", needs_ctx=True)
 _register("NoHeadCoverings.scalar", add_head_covering,
-          "Synthetic hat overlay [S8]",
+          "Synthetic hat overlay [§7.4.11 yaw/pitch/roll]",
           "coverage: 0% -> 100%", needs_ctx=True)
 
 
