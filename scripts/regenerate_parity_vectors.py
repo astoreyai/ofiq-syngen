@@ -52,9 +52,24 @@ def _run_ofiq(binary: Path, image_path: Path) -> dict[str, float]:
     """
     # OFIQ 1.1.0 SampleApp: -c <configDir> -i <inputFile|Dir> -o <outputFile>
     # No -l (list) flag; invoke per image.
-    config_dir = Path(
-        "/mnt/projects/02_perception_biometrics/OFIQ-Project/data"
-    )
+    # Portable resolution: OFIQ_DATA_DIR env, else inferred from binary location
+    # (binary lives in install_x86_64_linux/Release/bin, data in ../data).
+    env_data = os.environ.get("OFIQ_DATA_DIR")
+    if env_data:
+        config_dir = Path(env_data)
+    else:
+        # Walk up from binary path to find OFIQ-Project/data
+        candidate = binary.resolve().parent
+        for _ in range(6):
+            if (candidate / "data").is_dir() and (candidate / "data" / "models").is_dir():
+                config_dir = candidate / "data"
+                break
+            candidate = candidate.parent
+        else:
+            raise FileNotFoundError(
+                f"OFIQ data directory not found relative to {binary}. "
+                "Set OFIQ_DATA_DIR environment variable."
+            )
     with tempfile.TemporaryDirectory() as td:
         out_csv = Path(td) / "scores.csv"
         cmd = [

@@ -126,10 +126,22 @@ class GPUOFIQScorer:
         if ort is None:
             raise ImportError("onnxruntime required")
 
-        model_dir = Path(model_dir or os.environ.get(
-            "OFIQ_MODEL_DIR",
-            "/mnt/projects/02_perception_biometrics/OFIQ-Project/data/models",
-        ))
+        # Portable model resolution: explicit arg, then OFIQ_MODEL_DIR env,
+        # then auto-discovery via _find_default_model_dir().
+        from ofiq_syngen.models import _find_default_model_dir
+        if model_dir is not None:
+            model_dir = Path(model_dir)
+        elif os.environ.get("OFIQ_MODEL_DIR"):
+            model_dir = Path(os.environ["OFIQ_MODEL_DIR"])
+        else:
+            resolved = _find_default_model_dir()
+            if resolved is None:
+                raise FileNotFoundError(
+                    "OFIQ models not found. Set OFIQ_MODEL_DIR or install "
+                    "OFIQ-Project to a discoverable location (~/.ofiq/models, "
+                    "~/OFIQ-Project/data/models, /opt/ofiq/models, etc.)."
+                )
+            model_dir = resolved
 
         providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
         opts = ort.SessionOptions()

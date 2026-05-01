@@ -7,12 +7,21 @@ multiple OFIQ components simultaneously. The pipeline addresses this by:
 2. Building a degradation->component influence matrix from empirical data
 3. Using this matrix to weight training signal appropriately
 
-This means we don't pretend blur only affects Sharpness. We measure what it
-ACTUALLY changes across ALL components, and use the real multi-component
-delta as the training signal.
-
 The influence matrix W[d,c] = mean(|delta_OFIQ_c|) when degradation d is applied
 at severity 0.5. This is learned from data, not assumed.
+
+FaceContext requirements
+------------------------
+The pipeline auto-builds an OFIQ-aligned FaceContext (ADNet landmarks,
+BiSeNet face parsing, face occlusion segmentation, HeadPose3DDFAV2) for
+every input image. The OFIQ ONNX models are loaded once and cached.
+Operators that target OFIQ-specific regions use this context to apply
+their perturbation only within the exact pixels OFIQ measures.
+
+If the OFIQ models cannot be located (no ``OFIQ_MODEL_DIR`` env var, no
+common install path), :class:`MissingFaceContextError` is raised by
+default. Pass ``strict_context=False`` to ``DegradationPipeline`` to
+allow operators to fall back to context-free paths (lower fidelity).
 """
 
 from __future__ import annotations
@@ -30,6 +39,16 @@ from ofiq_syngen.components import (
 )
 
 
+class MissingFaceContextError(RuntimeError):
+    """Raised when a FaceContext is required but the OFIQ ONNX models cannot
+    be located.
+
+    Set ``OFIQ_MODEL_DIR`` to the OFIQ ``data/models`` directory, or pass
+    ``strict_context=False`` to ``DegradationPipeline`` to permit context-free
+    fallback paths (lower fidelity).
+    """
+
+
 @dataclass
 class DegradationConfig:
     """Configuration for the degradation pipeline."""
@@ -38,6 +57,14 @@ class DegradationConfig:
     seed: int = 42
     output_format: str = "jpg"
     jpg_quality: int = 95
+    strict_context: bool = False
+    """If True, raise ``MissingFaceContextError`` when the OFIQ models cannot
+    be loaded. Default is False (auto-detect): if OFIQ models are present,
+    they are used for high-fidelity perturbations; if not, operators fall back
+    to context-free paths.
+
+    Set to True for production / publication runs where you want a hard
+    guarantee that every operator used the OFIQ-aligned face context."""
 
 
 @dataclass
@@ -87,14 +114,32 @@ class DegradationPipeline:
         return self._models
 
     def _build_context(self, image: np.ndarray):
-        """Build FaceContext for an image (returns None if models unavailable)."""
+        """Build FaceContext for an image.
+
+        Returns None if models unavailable AND strict_context=False.
+        Raises MissingFaceContextError if strict_context=True and models
+        cannot be loaded.
+        """
         models = self._get_models()
         if models is None:
+            if self.config.strict_context:
+                raise MissingFaceContextError(
+                    "OFIQ ONNX models not found. Set the OFIQ_MODEL_DIR "
+                    "environment variable to the OFIQ data/models directory, "
+                    "or pass strict_context=False to allow context-free "
+                    "fallback (lower fidelity)."
+                )
             return None
         try:
             from ofiq_syngen.face_context import FaceContext
             return FaceContext.from_image(image, models)
-        except Exception:
+        except Exception as exc:
+            if self.config.strict_context:
+                raise MissingFaceContextError(
+                    f"FaceContext build failed: {exc}. Inspect the input "
+                    "image (must be a face image with detectable landmarks) "
+                    "or pass strict_context=False."
+                ) from exc
             return None
 
     def degrade_single(
@@ -114,11 +159,17 @@ class DegradationPipeline:
             severity: [0, 1] degradation strength.
             degradation_index: which degradation to use if component has multiple.
             seed: random seed for reproducibility.
-            ctx: Pre-built FaceContext (avoids redundant model inference
-                when calling degrade_single multiple times on the same image).
+            ctx: Pre-built FaceContext. If None and ``strict_context=True``,
+                the pipeline auto-builds one from OFIQ ONNX models. Pass
+                explicitly when calling degrade_single multiple times on the
+                same image to avoid redundant model inference.
 
         Returns:
             (degraded_image, metadata_dict)
+
+        Raises:
+            MissingFaceContextError: if ``strict_context=True`` and the
+                OFIQ models cannot be loaded.
         """
         if component not in COMPONENT_REGISTRY:
             raise ValueError(
@@ -130,8 +181,10 @@ class DegradationPipeline:
         deg = degs[degradation_index % len(degs)]
         s = seed if seed is not None else self.config.seed
 
-        # Build context if needed and not provided
-        if deg.requires_context and ctx is None:
+        # Auto-build FaceContext for ALL operators when not provided
+        # (operators that don't need ctx can ignore it; operators that
+        # do need ctx get region-targeted high-fidelity perturbations).
+        if ctx is None:
             ctx = self._build_context(image)
 
         degraded = deg.function(image, severity, s, ctx)

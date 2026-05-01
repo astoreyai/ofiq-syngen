@@ -21,11 +21,39 @@ except ImportError:
 _DEFAULT_MODEL_DIR: Path | None = None
 
 def _find_default_model_dir() -> Path | None:
-    """Search common OFIQ model locations."""
+    """Search portable OFIQ model locations.
+
+    Resolution order (most-explicit first):
+    1. ``OFIQ_MODEL_DIR`` environment variable (user-controlled, portable)
+    2. ``~/.ofiq/models`` (user-local, XDG-style)
+    3. ``~/OFIQ-Project/data/models`` (canonical OFIQ-Project install)
+    4. ``/opt/ofiq/models`` (system-wide install)
+    5. ``/usr/local/share/ofiq/models`` (POSIX system install)
+    6. Sibling repo layout: ``OFIQ-Project/data/models`` checked out next
+       to the ofiq-syngen package directory
+    7. Bundled with the wheel: ``ofiq_syngen/data/models`` inside the
+       installed package (only present if the user installed with
+       ``ofiq-syngen[models]`` and models are redistributable)
+
+    All paths are relative or env-resolved. No machine-specific absolute
+    paths. Falls back to None if no models are located; caller decides
+    whether to raise or operate in context-free mode.
+    """
+    # 1. Environment variable
+    env = os.environ.get("OFIQ_MODEL_DIR")
+    if env and (Path(env) / "face_landmark_estimation").exists():
+        return Path(env)
+
+    # 2-7. Portable auto-detect
     candidates = [
+        Path.home() / ".ofiq" / "models",
         Path.home() / "OFIQ-Project" / "data" / "models",
         Path("/opt/ofiq/models"),
         Path("/usr/local/share/ofiq/models"),
+        # Sibling repo layout: ofiq-syngen alongside OFIQ-Project
+        Path(__file__).resolve().parents[3] / "OFIQ-Project" / "data" / "models",
+        # Bundled with installed package
+        Path(__file__).resolve().parent / "data" / "models",
     ]
     for p in candidates:
         if p.exists() and (p / "face_landmark_estimation").exists():
