@@ -28,22 +28,23 @@ def add_head_covering(
     seed: int,
     ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Add a synthetic head covering (hat/headband) to the forehead.
+    """Render a realistic hat on top of the head (Phase 3 [§7.4.13]).
 
-    Places a colored band/patch above the eyebrows in the region
-    that BiSeNet would analyze for head coverings. Uses fabric-like
-    colors (dark neutrals, solid colors) that BiSeNet is likely to
-    classify as cloth or hat.
+    With FaceContext: delegates to ``occluders.render_hat()`` for a
+    photorealistic dome-shaped hat with fabric texture, brim shadow on
+    forehead, BiSeNet-trained colors, and feathered alpha edges.
 
-    Args:
-        img: BGR uint8 face image.
-        severity: [0, 1] controls coverage area.
-        seed: random seed.
-        ctx: FaceContext with landmarks and parsing map.
+    Without FaceContext: legacy heuristic colored band on forehead
+    (lower fidelity).
     """
     if severity < 0.05:
         return img
 
+    if ctx is not None:
+        from ofiq_syngen.occluders import render_hat
+        return render_hat(img, ctx, severity, seed)
+
+    # Legacy fallback path retained for ctx=None calls
     rng = np.random.RandomState(seed)
     h, w = img.shape[:2]
     out = img.copy()

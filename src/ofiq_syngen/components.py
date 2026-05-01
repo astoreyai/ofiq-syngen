@@ -506,34 +506,20 @@ def _mouth_open_warp(
 def _eye_occlusion_evz(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Occlude within the Eye Visibility Zone [§7.4.5].
+    """Render realistic sunglasses over the Eye Visibility Zone [§7.4.5].
 
-    OFIQ measures occlusion proportion within EVZ rectangles
-    (eye bounding rect expanded by floor(IED/20) pixels).
+    With FaceContext: uses ``occluders.render_sunglasses()`` to render
+    photorealistic sunglasses (elliptical lenses, frame, bridge, drop
+    shadow) positioned via EVZ landmarks.
+
+    Without FaceContext: falls back to a horizontal dark band placed
+    where eyes typically are (lower fidelity).
     """
     if ctx is None:
         return _eye_occlusion_fallback(img, severity, seed)
 
-    rng = np.random.RandomState(seed)
-    out = img.copy()
-    h, w = img.shape[:2]
-
-    for evz in [ctx.left_evz, ctx.right_evz]:
-        ex, ey, ew, eh = evz
-        # Clamp to image
-        x1, y1 = max(0, ex), max(0, ey)
-        x2, y2 = min(w, ex + ew), min(h, ey + eh)
-        if x2 <= x1 or y2 <= y1:
-            continue
-
-        # Occlusion covers severity fraction of the EVZ
-        occ_h = max(1, int((y2 - y1) * severity * 0.8))
-        occ_y = y1 + (y2 - y1 - occ_h) // 2
-
-        color = rng.randint(0, 60, 3).tolist()  # dark, like sunglasses
-        out[occ_y:occ_y + occ_h, x1:x2] = color
-
-    return out
+    from ofiq_syngen.occluders import render_sunglasses
+    return render_sunglasses(img, ctx, severity, seed)
 
 
 def _eye_occlusion_fallback(
@@ -553,39 +539,20 @@ def _eye_occlusion_fallback(
 def _mouth_occlusion_polygon(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Occlude within the mouth landmark polygon [§7.4.6].
+    """Render realistic surgical mask over the mouth region [§7.4.6].
 
-    OFIQ measures occlusion proportion within the convex polygon
-    of mouth outer landmarks [76..87].
+    With FaceContext: uses ``occluders.render_surgical_mask()`` to render
+    a photorealistic pleated surgical mask conforming to nose-bridge,
+    jaw, and chin landmarks. Severity controls coverage extent (mouth
+    only at low severity, full nose-to-chin at high severity).
+
+    Without FaceContext: falls back to a band over the mouth region.
     """
     if ctx is None:
         return _mouth_occlusion_fallback(img, severity, seed)
 
-    rng = np.random.RandomState(seed)
-    out = img.copy()
-    h, w = img.shape[:2]
-
-    mouth_pts = ctx.landmarks_98[MOUTH_OUTER].astype(np.int32)
-    hull = cv2.convexHull(mouth_pts)
-
-    # Create mask from the mouth polygon
-    mouth_mask = np.zeros((h, w), dtype=np.uint8)
-    cv2.fillConvexPoly(mouth_mask, hull, 1)
-
-    # Apply occlusion proportional to severity
-    color = [rng.randint(180, 220)] * 3  # surgical mask color
-    occ_mask = mouth_mask > 0
-
-    # Scale occlusion area by severity (erode the mask for lower severity)
-    if severity < 0.9:
-        erode_size = max(1, int((1 - severity) * 10))
-        erode_kernel = np.ones((erode_size, erode_size), np.uint8)
-        eroded = cv2.erode(mouth_mask, erode_kernel)
-        occ_mask = eroded > 0
-
-    out[occ_mask] = color
-
-    return out
+    from ofiq_syngen.occluders import render_surgical_mask
+    return render_surgical_mask(img, ctx, severity, seed)
 
 
 def _mouth_occlusion_fallback(
@@ -605,44 +572,19 @@ def _mouth_occlusion_fallback(
 def _face_region_occlusion(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Place rectangular occlusion within the face mask region [§7.4.7].
+    """Render realistic occluder over the face region [§7.4.7].
 
-    OFIQ measures occlusion proportion over the full face landmark mask.
+    With FaceContext: uses ``occluders.render_hand_occluder()`` to render
+    a skin-tone-matched hand silhouette over the lower face. Hand size
+    scales with severity, with drop shadow and feathered edges.
+
+    Without FaceContext: falls back to a random rectangular fill.
     """
     if ctx is None:
         return _rect_occlusion_fallback(img, severity, seed)
 
-    rng = np.random.RandomState(seed)
-    h, w = img.shape[:2]
-
-    # Find bounding box of the face mask
-    face_coords = np.argwhere(ctx.face_mask > 0)
-    if len(face_coords) == 0:
-        return img
-
-    y_min, x_min = face_coords.min(axis=0)
-    y_max, x_max = face_coords.max(axis=0)
-    face_h = y_max - y_min
-    face_w = x_max - x_min
-
-    # Occlusion size scales with severity
-    frac = severity * 0.6
-    oh, ow = max(2, int(face_h * frac)), max(2, int(face_w * frac))
-
-    # Place within face region
-    y = rng.randint(y_min, max(y_min + 1, y_max - oh + 1))
-    x = rng.randint(x_min, max(x_min + 1, x_max - ow + 1))
-
-    out = img.copy()
-    color = rng.randint(0, 256, 3).tolist()
-
-    # Only occlude pixels within the face mask
-    region_mask = ctx.face_mask[y:y + oh, x:x + ow] > 0
-    for c in range(3):
-        channel = out[y:y + oh, x:x + ow, c]
-        channel[region_mask] = color[c]
-
-    return out
+    from ofiq_syngen.occluders import render_hand_occluder
+    return render_hand_occluder(img, ctx, severity, seed)
 
 
 def _rect_occlusion_fallback(
