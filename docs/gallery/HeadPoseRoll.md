@@ -1,6 +1,6 @@
 # HeadPoseRoll.scalar
 
-![HeadPoseRoll.scalar severity strip](gallery/images/HeadPoseRoll_strip.png)
+![HeadPoseRoll.scalar severity strip](images/HeadPoseRoll_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

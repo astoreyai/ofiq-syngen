@@ -20,9 +20,11 @@ from scipy.interpolate import RBFInterpolator
 
 from ofiq_syngen.landmark_utils import (
     BISENET_BACKGROUND,
-    MOUTH_OUTER,
+    BISENET_HAIR,
+    LEFT_EYE,
     PAIRS_LEFT_EYE,
     PAIRS_RIGHT_EYE,
+    RIGHT_EYE,
 )
 from ofiq_syngen.standards import STANDARDS_REFS, StandardRefs
 
@@ -49,60 +51,44 @@ class ComponentDegradation:
 def _background_clutter_segmented(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Add structured noise to the segmented background region [§7.3.2].
+    """Add structured non-uniformity to the segmented background [§7.3.2].
 
-    OFIQ measures Sobel gradient magnitude on the BiSeNet-segmented
-    background (class 0), eroded with a 4x4 kernel. We add edge-creating
-    noise within that exact mask.
+    OFIQ measures the L1 norm of Sobel gradients on the BiSeNet
+    background (class 0), eroded with a 4x4 kernel. We modulate the
+    background luminance with a multi-octave noise field that produces
+    strong, naturally-shaped gradients instead of confetti-like patches.
+
+    Octaves: 8x8 (low-freq lighting gradient), 32x32 (surface texture),
+    128x128 (fine detail). Cubic upsample yields smooth-but-edged
+    transitions that read as wall texture, fabric weave, or lighting
+    falloff rather than synthetic noise.
     """
     if ctx is None or ctx.parsing_map is None:
         return _background_clutter_fallback(img, severity, seed)
+    if severity < 0.01:
+        return img
 
     rng = np.random.RandomState(seed)
     h, w = img.shape[:2]
 
-    # Get background mask from parsing map (class 0)
-    bg_mask_small = (ctx.parsing_map == BISENET_BACKGROUND).astype(np.uint8)
-    bg_mask = cv2.resize(bg_mask_small, (w, h), interpolation=cv2.INTER_NEAREST)
-
-    # Erode with 4x4 kernel (matching OFIQ's BackgroundUniformity.cpp)
-    kernel = np.ones((4, 4), np.uint8)
-    bg_mask = cv2.erode(bg_mask, kernel)
-
-    if bg_mask.sum() == 0:
+    bg_small = (ctx.parsing_map == BISENET_BACKGROUND).astype(np.uint8)
+    bg_mask = cv2.resize(bg_small, (w, h), interpolation=cv2.INTER_NEAREST)
+    bg_mask = cv2.erode(bg_mask, np.ones((4, 4), np.uint8))
+    if int(bg_mask.sum()) == 0:
         return img
 
-    # Add structured noise that creates Sobel gradients (edges, not just pixel noise)
-    out = img.copy()
-    noise_intensity = int(severity * 200)
-    if noise_intensity < 1:
-        return img
+    field = np.zeros((h, w), dtype=np.float32)
+    for tile, weight in [(8, 0.6), (32, 0.3), (128, 0.1)]:
+        n = rng.randn(tile, tile).astype(np.float32)
+        field += cv2.resize(n, (w, h), interpolation=cv2.INTER_CUBIC) * weight
+    field /= float(np.abs(field).max() + 1e-8)
 
-    # Random rectangles and edges within background to create gradient spikes
-    n_patches = max(3, int(severity * 20))
-    bg_coords = np.argwhere(bg_mask > 0)
-    if len(bg_coords) == 0:
-        return img
+    amplitude = severity * 90.0
+    soft = _feather_mask(bg_mask, sigma=2.0)[..., None]
+    delta = (field * amplitude)[..., None].astype(np.float32)
 
-    for _ in range(n_patches):
-        idx = rng.randint(0, len(bg_coords))
-        cy, cx = bg_coords[idx]
-        patch_size = rng.randint(3, max(4, int(severity * 40)))
-        rng.randint(0, 256, 3).tolist()
-
-        y1, y2 = max(0, cy - patch_size // 2), min(h, cy + patch_size // 2)
-        x1, x2 = max(0, cx - patch_size // 2), min(w, cx + patch_size // 2)
-
-        patch_mask = bg_mask[y1:y2, x1:x2]
-        for c in range(3):
-            channel = out[y1:y2, x1:x2, c]
-            channel[patch_mask > 0] = np.clip(
-                channel[patch_mask > 0].astype(np.int16) +
-                rng.randint(-noise_intensity, noise_intensity + 1, channel[patch_mask > 0].shape),
-                0, 255,
-            ).astype(np.uint8)
-
-    return out
+    out = img.astype(np.float32) + delta * soft
+    return np.clip(out, 0, 255).astype(np.uint8)
 
 
 def _background_clutter_fallback(
@@ -128,34 +114,62 @@ def _background_clutter_fallback(
 def _uneven_illumination_roi(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Darken one ROI zone to create left-right illumination asymmetry [§7.3.3].
+    """Side lighting: smooth left-right luminance gradient on the face [§7.3.3].
 
     OFIQ measures histogram intersection between left and right ROI zones
-    (computed from eye centers and IED). We darken one zone to reduce the
-    histogram overlap.
+    (small cheek patches near each eye). The histogram intersection drops
+    when the two sides have different luminance distributions, which is
+    what real side-lighting (a window from one direction, off-camera flash,
+    cast shadow) produces. We render that look directly: a smooth gradient
+    across the face mask darkening one side.
     """
     if ctx is None:
         return _uneven_illumination_fallback(img, severity, seed)
-
-    rng = np.random.RandomState(seed)
-    out = img.astype(np.float32)
-    h, w = img.shape[:2]
-
-    # Pick which ROI to darken
-    target_roi = ctx.left_roi if rng.random() < 0.5 else ctx.right_roi
-    rx, ry, rw, rh = target_roi
-
-    # Clamp to image bounds
-    x1, y1 = max(0, rx), max(0, ry)
-    x2, y2 = min(w, rx + rw), min(h, ry + rh)
-
-    if x2 <= x1 or y2 <= y1:
+    if severity < 0.01:
         return img
 
-    factor = 1.0 - severity * 0.8
-    out[y1:y2, x1:x2] *= factor
+    # Prefer IP2P (photoreal side lighting with shadows that follow face
+    # geometry) when available.
+    import os
+    method = os.environ.get("OFIQ_SYNGEN_EXPRESSION_METHOD", "3dmm").lower()
+    if method in ("ip2p", "instructpix2pix", "instruct_pix2pix"):
+        try:
+            from ofiq_syngen.expression_diffusion import (
+                is_sd_available, render_side_lighting_ip2p,
+            )
+            if is_sd_available():
+                return render_side_lighting_ip2p(img, ctx, severity, seed)
+        except Exception:
+            pass
 
-    return np.clip(out, 0, 255).astype(np.uint8)
+    rng = np.random.RandomState(seed)
+    direction = rng.choice([-1, 1])  # which side gets the shadow
+
+    h, w = img.shape[:2]
+    img_f = img.astype(np.float32)
+
+    # Build a horizontal gradient that goes from full brightness on the
+    # lit side to (1 - severity * 0.7) on the shadow side. Power 1.5 makes
+    # the falloff slightly more concentrated on the shadow side, which
+    # looks more like a real off-axis light source.
+    xs = np.linspace(0, 1, w, dtype=np.float32)
+    if direction > 0:
+        ramp = xs  # 0 on left, 1 on right -> shadow on left
+    else:
+        ramp = 1.0 - xs  # shadow on right
+    shadow_strength = severity * 0.7
+    gradient = 1.0 - shadow_strength * (1.0 - ramp) ** 1.5  # (W,)
+    gradient_2d = np.broadcast_to(gradient[None, :, None], (h, w, 3))
+
+    perturbed = img_f * gradient_2d
+
+    if ctx.face_mask is not None:
+        clean_mask = _hull_minus_hair_mask(ctx, h, w)
+        # Wide feather so the gradient blends invisibly into hair / neck
+        sigma = max(8.0, min(h, w) / 12)
+        soft = _feather_mask(clean_mask, sigma=sigma)
+        return _alpha_blend(img, np.clip(perturbed, 0, 255).astype(np.uint8), soft)
+    return np.clip(perturbed, 0, 255).astype(np.uint8)
 
 
 def _uneven_illumination_fallback(
@@ -176,87 +190,233 @@ def _uneven_illumination_fallback(
 def _darken_face(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Darken within the face mask region [§7.3.4 / §7.3.5/§7.3.6].
+    """Whole-image gamma darkening to lower face mean luminance [§7.3.4].
 
     OFIQ measures luminance histogram within the face landmark mask.
+    Face-only darkening looked unnatural (bright hair against dim face,
+    like a stage spotlight). Uniform whole-image gamma is honest about
+    being an underexposure perturbation: face pixels darken (degrading
+    the LuminanceMean scalar correctly) AND hair / neck / clothing /
+    background darken with them, matching real underexposed photographs.
     """
-    factor = 1.0 - severity * 0.85
-    darkened = np.clip(img.astype(np.float32) * factor, 0, 255).astype(np.uint8)
-
-    if ctx is not None and ctx.face_mask is not None:
-        mask3 = ctx.face_mask[:, :, np.newaxis] > 0
-        return np.where(mask3, darkened, img)
-    return darkened
+    if severity < 0.01:
+        return img
+    # Gamma in [1.0 .. 3.5] across severity. Gamma > 1 photographically
+    # darkens midtones while preserving extremes. Cap at 3.5 so the
+    # whole image stays readable at sev=1.0 (no full black silhouette).
+    gamma = 1.0 + severity * 2.5
+    img_f = img.astype(np.float32) / 255.0
+    darkened = np.power(img_f, gamma) * 255.0
+    return np.clip(darkened, 0, 255).astype(np.uint8)
 
 
 def _darken_face_with_occlusion(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Darken within face mask AND occlusion mask [§7.3.5 UnderExposure].
+    """Per-image autoscaled gamma underexposure for §7.3.5.
 
-    OFIQ's CalculateExposure uses bitwise_and(faceMask, occlusionMask).
+    OFIQ measures the proportion of face pixels with Y < 10 inside the
+    face mask. A fixed gamma curve (e.g., 1.0..3.5) only crosses that
+    threshold on already-dark sources -- bright skin survives gamma=3.5
+    with face Y mean ~110 and a near-zero <10 proportion, so the OFIQ
+    scalar stays at 100. We instead autoscale gamma per image so that
+    at sev=1.0 the face Y mean lands at ~5 (well below 10), regardless
+    of source brightness.
+
+    Solve mean(face_Y / 255 ** gamma) = 5/255 for gamma. With y = mean
+    face Y as a float in [0, 1], gamma_target = log(5/255) / log(y).
+    Severity interpolates linearly between gamma 1.0 (no change) and
+    gamma_target. Clamped to [1.0, 8.0] so image stays decodable.
+    Whole-image gamma is preserved (face-only darkening looked spotlit;
+    real underexposed photographs darken everything together).
     """
-    factor = 1.0 - severity * 0.85
-    darkened = np.clip(img.astype(np.float32) * factor, 0, 255).astype(np.uint8)
+    if severity < 0.01:
+        return img
 
-    if ctx is not None and ctx.face_mask is not None:
-        combined = cv2.bitwise_and(ctx.face_mask, ctx.occlusion_mask)
-        mask3 = combined[:, :, np.newaxis] > 0
-        return np.where(mask3, darkened, img)
-    return darkened
+    # OFIQ UnderExposure raw = proportion of (face_landmark_region AND
+    # occlusion_mask) pixels with luminance in [0, 25] (inclusive),
+    # mapped through sigmoid x0=0.92, w=0.05 to the [0, 100] scalar.
+    # The scalar starts moving below 100 only once ~90% of OFIQ's mask
+    # lands in [0, 25].
+    #
+    # Per-image autoscale: solve gamma so face Y mean lands at target=5.
+    # For face_y_mean already < target, no darkening is needed. Cap
+    # gamma at 10 because beyond that OFIQ's face detector starts
+    # failing alignment (returning scalar=-1 instead of a valid score),
+    # which is worse than a stuck-at-100 scalar -- the latter is honest
+    # about "the OFIQ measure cannot judge this face as underexposed".
+    if ctx is not None and ctx.face_mask is not None and (ctx.face_mask > 0).any():
+        m = ctx.face_mask > 0
+        lum = (
+            0.0722 * img[..., 0]
+            + 0.7152 * img[..., 1]
+            + 0.2126 * img[..., 2]
+        )
+        face_y_mean = float(lum[m].mean()) / 255.0
+    else:
+        face_y_mean = float(img.mean()) / 255.0
+
+    target_y = 5.0 / 255.0
+    if face_y_mean <= target_y:
+        gamma_target = 1.0
+    elif face_y_mean >= 0.999:
+        gamma_target = 10.0
+    else:
+        gamma_target = float(np.log(target_y) / np.log(face_y_mean))
+    # Cap at 10: beyond ~12, OFIQ face alignment fails on the darkened
+    # image and returns a -1 sentinel rather than a valid scalar.
+    gamma_target = max(1.0, min(10.0, gamma_target))
+    gamma = 1.0 + severity * (gamma_target - 1.0)
+
+    img_f = img.astype(np.float32) / 255.0
+    darkened = np.power(img_f, gamma) * 255.0
+    return np.clip(darkened, 0, 255).astype(np.uint8)
 
 
 def _brighten_face(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Brighten within the face mask region [§7.3.6 OverExposure].
+    """Whole-image gamma brightening to push face toward overexposure [§7.3.6].
 
-    Pushes face pixels toward luminance 247-255 range.
+    OFIQ OverExposurePrevention measures the proportion of face pixels
+    pushed into the high-luminance (>247) range. Face-only brightening
+    looked unnatural (blown-out face spotlit against normal hair).
+    Uniform whole-image gamma matches real overexposed photographs:
+    face gets blown out (degrading the OFIQ scalar correctly) AND
+    hair / neck / clothing brighten with it.
     """
-    factor = 1.0 + severity * 2.5
-    brightened = np.clip(img.astype(np.float32) * factor, 0, 255).astype(np.uint8)
-
-    if ctx is not None and ctx.face_mask is not None:
-        mask3 = ctx.face_mask[:, :, np.newaxis] > 0
-        return np.where(mask3, brightened, img)
-    return brightened
+    if severity < 0.01:
+        return img
+    # Gamma in [1.0 .. 0.25]. Gamma < 1 photographically brightens
+    # midtones while preserving extremes. Cap at 0.25 so the image
+    # stays readable at sev=1.0 (no full-white blowout).
+    gamma = 1.0 - severity * 0.75
+    img_f = img.astype(np.float32) / 255.0
+    brightened = np.power(img_f, gamma) * 255.0
+    return np.clip(brightened, 0, 255).astype(np.uint8)
 
 
 def _reduce_luminance_variance_face(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Compress luminance variance within face region [§7.3.4].
+    """Bidirectional face luminance variance perturbation [§7.3.4].
 
-    OFIQ measures luminance histogram variance within the face mask.
+    OFIQ scalar = round(100 * sin((60v) / (60v+1) * pi)) where v is the
+    face Y variance (normalized [0, 1]). The scalar peaks at v ~= 1/60
+    (~0.0167) and DROPS BOTH WAYS -- raising or lowering variance from
+    that optimum degrades the scalar. So a one-directional "compress
+    variance" operator improves the OFIQ scalar on already-high-variance
+    sources (which is most natural face imagery, var ~ 0.05-0.10) and
+    only degrades the rare low-variance source.
+
+    Direction is chosen per image: if face Y variance > optimum, compress
+    toward face mean (existing behavior); if below, expand by injecting
+    deterministic per-pixel offsets to push variance away from optimum.
+    Both branches honor the hull-minus-hair feather blend so the
+    boundary stays invisible.
     """
-    factor = 1.0 - severity * 0.9
-    result = img.astype(np.float32)
+    if severity < 0.01:
+        return img
+    img_f = img.astype(np.float32)
+    h, w = img.shape[:2]
+    optimum = 1.0 / 60.0  # OFIQ peak
 
+    # Probe face variance to decide direction
     if ctx is not None and ctx.face_mask is not None:
-        mask = ctx.face_mask > 0
-        for c in range(3):
-            face_pixels = result[:, :, c][mask]
-            if len(face_pixels) == 0:
-                continue
-            ch_mean = face_pixels.mean()
-            result[:, :, c][mask] = ch_mean + (face_pixels - ch_mean) * factor
+        m = ctx.face_mask > 0
     else:
-        for c in range(3):
-            ch_mean = result[:, :, c].mean()
-            result[:, :, c] = ch_mean + (result[:, :, c] - ch_mean) * factor
+        m = None
+    if m is not None and m.any():
+        face_lum = (
+            img_f[..., 0] * 0.0722
+            + img_f[..., 1] * 0.7152
+            + img_f[..., 2] * 0.2126
+        ) / 255.0
+        var = float(face_lum[m].var())
+    else:
+        var = 0.05  # plausible photographic default
 
-    return np.clip(result, 0, 255).astype(np.uint8)
+    s_eff = float(np.sqrt(np.clip(severity, 0.0, 1.0)))
+
+    if var >= optimum:
+        # Source variance is ABOVE the OFIQ optimum (0.0167) — most
+        # natural face imagery (typical var ~0.05-0.1). EXPAND variance
+        # further by anti-mean scaling: push each pixel away from the
+        # face mean by factor 1+s_eff*N. Additive Gaussian noise was
+        # tried first but uint8 clipping at 0/255 kills the variance
+        # gain on bright/dark images. Anti-mean scaling tolerates
+        # clipping because saturated extremes ARE high-variance.
+        if m is not None and ctx is not None and ctx.face_mask is not None:
+            clean_mask = _hull_minus_hair_mask(ctx, h, w)
+            mask = clean_mask > 0
+            face_pixels = img_f[mask].reshape(-1, 3)
+            if face_pixels.size == 0:
+                return img
+            face_mean = face_pixels.mean(axis=0)
+            factor = 1.0 + s_eff * 4.0  # 1..5x expansion
+            expanded = face_mean + (img_f - face_mean) * factor
+            sigma = max(8.0, min(h, w) / 12)
+            return _alpha_blend(
+                img,
+                np.clip(expanded, 0, 255).astype(np.uint8),
+                _feather_mask(clean_mask, sigma=sigma),
+            )
+        # No mask: expand around 128
+        factor = 1.0 + s_eff * 4.0
+        expanded = 128.0 + (img_f - 128.0) * factor
+        return np.clip(expanded, 0, 255).astype(np.uint8)
+
+    # Source variance is BELOW the OFIQ optimum (rare for natural faces
+    # — would require flat-lit / overexposed input). COMPRESS toward
+    # the per-channel face mean to crush variance even lower.
+    factor = 1.0 - s_eff * 0.98
+    sat_factor = 1.0 - s_eff * 0.55
+    if m is not None and ctx is not None and ctx.face_mask is not None:
+        clean_mask = _hull_minus_hair_mask(ctx, h, w)
+        mask = clean_mask > 0
+        face_pixels = img_f[mask].reshape(-1, 3)
+        if face_pixels.size == 0:
+            return img
+        face_mean = face_pixels.mean(axis=0)
+        compressed = face_mean + (img_f - face_mean) * factor
+        luma = (compressed[..., 0] * 0.0722 + compressed[..., 1] * 0.7152
+                + compressed[..., 2] * 0.2126)
+        gray3 = np.stack([luma, luma, luma], axis=-1)
+        perturbed = gray3 + (compressed - gray3) * sat_factor
+        sigma = max(8.0, min(h, w) / 12)
+        return _alpha_blend(
+            img,
+            np.clip(perturbed, 0, 255).astype(np.uint8),
+            _feather_mask(clean_mask, sigma=sigma),
+        )
+    perturbed = 128.0 + (img_f - 128.0) * factor
+    return np.clip(perturbed, 0, 255).astype(np.uint8)
 
 
-def _feather_mask(mask: np.ndarray, sigma: float | None = None) -> np.ndarray:
+def _feather_mask(
+    mask: np.ndarray, sigma: float | None = None, inward_only: bool = True,
+) -> np.ndarray:
     """Convert binary uint8 mask to a soft alpha (0..1 float32) via Gaussian.
 
     Sigma defaults to mask_diameter / 60 (visually invisible mask edge).
+
+    With ``inward_only=True`` (default), the binary mask is eroded by
+    ~sigma before blurring so the soft edge sits INSIDE the original
+    boundary. This prevents the perturbation from bleeding past the
+    OFIQ measurement region (e.g. face_mask perturbations leaking onto
+    neck or dress). Pass ``inward_only=False`` for symmetric edge
+    transitions (rare).
     """
     h, w = mask.shape[:2]
     if sigma is None:
         sigma = max(2.0, min(h, w) / 60)
-    soft = cv2.GaussianBlur(mask.astype(np.float32), (0, 0), sigma)
+    if inward_only:
+        erode_px = max(1, int(round(sigma * 2)))
+        eroded = cv2.erode(mask, np.ones((erode_px, erode_px), np.uint8))
+        src = eroded.astype(np.float32)
+    else:
+        src = mask.astype(np.float32)
+    soft = cv2.GaussianBlur(src, (0, 0), sigma)
     return np.clip(soft, 0.0, 1.0)
 
 
@@ -272,48 +432,173 @@ def _alpha_blend(
     return np.clip(blended, 0, 255).astype(np.uint8)
 
 
+def _sample_backdrop_color(
+    img: np.ndarray, ctx: FaceContext | None,
+) -> tuple[int, int, int]:
+    """Sample a uniform backdrop color from the source image.
+
+    Used by Category C operators (HeadSize, InterEyeDistance, the four
+    crop/margin operators) to fill regions emptied by reframing the face.
+
+    Strategy:
+        1. If ctx has a BiSeNet parsing map, average the source pixels
+           classified as background (class 0).
+        2. Otherwise, average a 5-pixel-wide border ring around the
+           image edge (likely background in a portrait composition).
+
+    Returns (B, G, R) tuple of uint8.
+    """
+    h, w = img.shape[:2]
+    if ctx is not None and ctx.parsing_map is not None:
+        bg_small = (ctx.parsing_map == BISENET_BACKGROUND).astype(np.uint8)
+        bg_mask = cv2.resize(bg_small, (w, h), interpolation=cv2.INTER_NEAREST)
+        if bg_mask.sum() > 100:
+            bg_pixels = img[bg_mask > 0]
+            mean = bg_pixels.mean(axis=0)
+            return tuple(int(v) for v in mean)
+    # Fallback: average a 5-pixel ring around the image edge
+    edge = np.concatenate([
+        img[:5].reshape(-1, 3), img[-5:].reshape(-1, 3),
+        img[:, :5].reshape(-1, 3), img[:, -5:].reshape(-1, 3),
+    ])
+    mean = edge.mean(axis=0)
+    return tuple(int(v) for v in mean)
+
+
+def _hull_minus_hair_mask(ctx: FaceContext, h: int, w: int) -> np.ndarray:
+    """Return the OFIQ face_mask convex hull with BiSeNet hair pixels removed.
+
+    OFIQ's face_mask is a convex hull of the 98 ADNet landmarks; on most
+    portraits this hull sweeps through hair flowing past the temples and
+    forehead. Subtracting BiSeNet's hair class (17) inside the hull
+    preserves all real face features (eyes, brows, nose, lips, skin)
+    while removing the hair pixels that cause visible bleed when the
+    perturbation is rendered. ~66% of the original hull pixels survive,
+    enough for OFIQ's hull-wide measurements to register the
+    perturbation cleanly.
+    """
+    if ctx.face_mask is None or ctx.parsing_map is None:
+        return ctx.face_mask if ctx.face_mask is not None else np.zeros((h, w), np.uint8)
+    hair_small = (ctx.parsing_map == BISENET_HAIR).astype(np.uint8)
+    hair = cv2.resize(hair_small, (w, h), interpolation=cv2.INTER_NEAREST)
+    return ((ctx.face_mask > 0) & (hair == 0)).astype(np.uint8)
+
+
+def _warp_with_inpaint(
+    img: np.ndarray, warp_fn: Callable,
+) -> np.ndarray:
+    """Apply a geometric warp and inpaint the empty source-out-of-bounds region.
+
+    ``warp_fn(src, border_mode, border_value)`` must perform the transform.
+    Holes (regions the warp left empty) are filled by Telea's inpainting
+    algorithm, which extends the surrounding image content naturally
+    instead of producing the smeared streaks that ``cv2.BORDER_REPLICATE``
+    creates at large displacements.
+    """
+    h, w = img.shape[:2]
+    warped = warp_fn(img, cv2.BORDER_CONSTANT, 0)
+    marker = np.full((h, w), 255, dtype=np.uint8)
+    marker_warped = warp_fn(marker, cv2.BORDER_CONSTANT, 0)
+    hole_mask = (marker_warped < 128).astype(np.uint8) * 255
+    if int(hole_mask.sum()) == 0:
+        return warped
+    return cv2.inpaint(warped, hole_mask, 3, cv2.INPAINT_TELEA)
+
+
+def _warp_with_flat_backdrop(
+    img: np.ndarray, warp_fn: Callable, ctx: FaceContext | None,
+) -> np.ndarray:
+    """Apply a geometric warp and fill the empty region with a flat backdrop.
+
+    Used by Category C operators (crop/margin shifts) where the OFIQ
+    metric only cares about landmark positions. A uniform fill avoids
+    confounding BackgroundUniformity / NaturalColour / Illumination
+    components with hallucinated texture.
+    """
+    h, w = img.shape[:2]
+    bg_color = _sample_backdrop_color(img, ctx)
+    warped = warp_fn(img, cv2.BORDER_CONSTANT, 0)
+    marker = np.full((h, w), 255, dtype=np.uint8)
+    marker_warped = warp_fn(marker, cv2.BORDER_CONSTANT, 0)
+    hole_mask = (marker_warped < 128)
+    if not hole_mask.any():
+        return warped
+    warped[hole_mask] = bg_color
+    return warped
+
+
 def _reduce_dynamic_range(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Compress dynamic range toward mid-gray within the face mask [§7.3.7].
+    """Compress dynamic range around the face mean within the face mask [§7.3.7].
 
-    OFIQ measures Shannon entropy of luminance histogram on the face landmark
-    mask. Perturbation is masked to the face region with feathered alpha so
-    background entropy is unchanged.
+    OFIQ measures Shannon entropy of luminance histogram on the face
+    landmark mask. To degrade, we crush the histogram around its own
+    centre of mass (per-channel mean of face pixels) instead of pulling
+    toward absolute mid-gray, so skin tonality is preserved while
+    texture variation collapses. Capped at 85% compression so even
+    sev=1.0 retains a hint of detail rather than going ghostly flat.
     """
-    mid = 128.0
-    factor = 1.0 - severity * 0.9
-    perturbed = np.clip(
-        mid + (img.astype(np.float32) - mid) * factor, 0, 255
-    ).astype(np.uint8)
+    if severity < 0.01:
+        return img
+    # OFIQ DynamicRange measures Shannon entropy of the face LUMINANCE
+    # histogram (not chroma). Quantize the Y channel of YCbCr and
+    # leave Cb / Cr at full precision: destroys the luminance entropy
+    # OFIQ scores while preserving natural skin / lip color (per-RGB
+    # posterization shifts hue toward magenta / yellow at low levels).
+    # Levels go from 64 (subtle banding) to 4 (heavy banding).
+    # LuminanceVariance uses the related "compress around mean"
+    # technique; the two operators are intentionally different to
+    # target the specific statistic OFIQ measures for each.
+    s_eff = float(np.sqrt(np.clip(severity, 0.0, 1.0)))
+    n_levels = max(4, int(round(64.0 - s_eff * 60.0)))
+    step = 255.0 / max(n_levels - 1, 1)
+
+    ycbcr = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb).astype(np.float32)
+    y = ycbcr[..., 0]
+    ycbcr[..., 0] = np.clip(np.round(y / step) * step, 0, 255)
+    posterized_u8 = cv2.cvtColor(
+        ycbcr.astype(np.uint8), cv2.COLOR_YCrCb2BGR,
+    )
+    h, w = img.shape[:2]
 
     if ctx is not None and ctx.face_mask is not None:
-        return _alpha_blend(img, perturbed, _feather_mask(ctx.face_mask))
-    return perturbed
+        clean_mask = _hull_minus_hair_mask(ctx, h, w)
+        sigma = max(8.0, min(h, w) / 12)
+        return _alpha_blend(
+            img, posterized_u8, _feather_mask(clean_mask, sigma=sigma),
+        )
+    return posterized_u8
 
 
 def _blur(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Gaussian blur within the face mask [§7.3.8].
+    """Whole-image Gaussian blur (out-of-focus simulation) [§7.3.8].
 
-    OFIQ measures sharpness via RF on Sobel/Laplace features of the face
-    crop. Blur is applied only inside the face mask so the background
-    remains sharp.
+    OFIQ Sharpness measures Sobel/Laplace features inside the face crop.
+    Real out-of-focus images blur the WHOLE scene, not just the face.
+    Face-only blur left the hair pin-sharp against a fuzzy face which
+    looked unnatural; whole-image blur matches real shallow-depth-of-
+    field / wrong-focus shots and degrades the OFIQ scalar correctly.
     """
+    if severity < 0.01:
+        return img
     sigma = severity * 10.0 + 0.5
     ksize = int(6 * sigma + 1) | 1
-    perturbed = cv2.GaussianBlur(img, (ksize, ksize), sigma)
-
-    if ctx is not None and ctx.face_mask is not None:
-        return _alpha_blend(img, perturbed, _feather_mask(ctx.face_mask))
-    return perturbed
+    return cv2.GaussianBlur(img, (ksize, ksize), sigma)
 
 
 def _motion_blur(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Directional motion blur within the face mask [§7.3.8]."""
+    """Whole-image directional motion blur (camera shake) [§7.3.8].
+
+    Real motion blur affects the entire frame uniformly; face-only
+    motion blur looked like a stage spotlight effect.
+    """
+    if severity < 0.01:
+        return img
     ksize = max(int(severity * 30) + 1, 3)
     kernel = np.zeros((ksize, ksize))
     rng = np.random.RandomState(seed)
@@ -325,79 +610,91 @@ def _motion_blur(
         if 0 <= x < ksize and 0 <= y < ksize:
             kernel[y, x] = 1
     kernel /= kernel.sum() + 1e-8
-    perturbed = cv2.filter2D(img, -1, kernel)
-
-    if ctx is not None and ctx.face_mask is not None:
-        return _alpha_blend(img, perturbed, _feather_mask(ctx.face_mask))
-    return perturbed
+    return cv2.filter2D(img, -1, kernel)
 
 
 def _gaussian_noise(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Additive Gaussian noise within the face mask [§7.3.8].
+    """Whole-image additive Gaussian noise (sensor noise) [§7.3.8].
 
-    Noise on the luminance channel only (preserves color saturation).
+    Real sensor noise (low-light, high ISO, cheap webcam) appears
+    uniformly across the frame, not selectively on the face.
     """
+    if severity < 0.01:
+        return img
     rng = np.random.RandomState(seed)
     sigma = severity * 80
     noise = rng.randn(*img.shape) * sigma
-    perturbed = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
-
-    if ctx is not None and ctx.face_mask is not None:
-        return _alpha_blend(img, perturbed, _feather_mask(ctx.face_mask))
-    return perturbed
+    return np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
 
 
 def _jpeg_compression(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """JPEG re-encoding [§7.3.9]. Keep as-is (EXCELLENT fidelity)."""
-    quality = max(int((1 - severity) * 95) + 5, 1)
-    _, buf = cv2.imencode(".jpg", img, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
-    return cv2.imdecode(buf, cv2.IMREAD_COLOR)
+    """Cascaded JPEG + chroma quantization for §7.3.9 CompressionArtifacts.
+
+    OFIQ's CompressionArtifacts is a CNN that returns a raw score in
+    [0, 1] then maps it through a sigmoid (x0=0.33, w=0.092, rounded
+    to int) to the [0, 100] scalar. Empirically the CNN's raw response
+    on a clean CelebA face has a floor near 0.65 even under Q=1 JPEG
+    -- well above the sigmoid's transition zone -- so single-pass JPEG
+    leaves the scalar at 100 regardless of Q.
+
+    The combination that DOES move the raw score below the floor is
+    cascaded (chroma quantize + JPEG) passes. Severity controls both
+    the chroma quantization step (1..32) and JPEG quality (95..3),
+    cascaded for max(1, ceil(severity * 4)) passes. This drives the
+    raw score down by ~0.25 per pass beyond the single-pass floor,
+    eventually crossing the sigmoid transition and pulling the scalar
+    below 100. Visually the result is the cascaded re-upload pattern
+    real-world images accumulate (camera JPEG -> social-media re-encode
+    -> screenshot -> re-upload).
+    """
+    if severity < 0.01:
+        return img
+    chroma_step = max(1, int(round(1 + severity * 31)))
+    jpeg_q = max(3, int(round(95 - severity * 92)))
+    passes = max(1, int(round(severity * 4)))
+    out = img
+    for _ in range(passes):
+        ycc = cv2.cvtColor(out, cv2.COLOR_BGR2YCrCb)
+        ycc[..., 1] = (ycc[..., 1] // chroma_step) * chroma_step
+        ycc[..., 2] = (ycc[..., 2] // chroma_step) * chroma_step
+        out = cv2.cvtColor(ycc, cv2.COLOR_YCrCb2BGR)
+        _, buf = cv2.imencode(".jpg", out, [int(cv2.IMWRITE_JPEG_QUALITY), jpeg_q])
+        out = cv2.imdecode(buf, cv2.IMREAD_COLOR)
+    return out
 
 
 def _color_cast_cielab(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Push skin color outside natural CIELAB range in the ROI zones [§7.3.10].
+    """Apply a global CIELAB color cast (white-balance shift) [§7.3.10].
 
-    OFIQ measures CIELAB distance from ideal ranges a* in [5,25], b* in [5,35]
-    in the left/right ROI zones. We shift chromaticity within those zones.
+    OFIQ measures CIELAB distance from natural skin ranges (a* in
+    [5,25], b* in [5,35]) within left / right cheek ROI zones near the
+    eyes. A global white-balance shift naturally drives those ROI zones
+    out of range while looking like a real photographic color cast
+    (wrong white balance, mixed-light scene, color filter) instead of
+    rectangle stickers on the cheeks.
+
+    Direction is randomized per seed: positive = warm cast (yellow /
+    orange), negative = cool cast (blue / cyan).
     """
-    if ctx is None:
-        return _color_cast_fallback(img, severity, seed)
-
+    if severity < 0.01:
+        return img
     rng = np.random.RandomState(seed)
-    out = img.copy()
-    h, w = img.shape[:2]
+    direction = rng.choice([-1, 1])
 
-    for roi in [ctx.left_roi, ctx.right_roi]:
-        rx, ry, rw, rh = roi
-        x1, y1 = max(0, rx), max(0, ry)
-        x2, y2 = min(w, rx + rw), min(h, ry + rh)
-        if x2 <= x1 or y2 <= y1:
-            continue
+    # Shift a* / b* uniformly. Magnitude up to 50 LAB units at sev=1.0
+    # is enough to push skin pixels well outside the ideal range.
+    shift = direction * severity * 50.0
 
-        region = out[y1:y2, x1:x2].astype(np.float32)
-
-        # Convert to LAB using OpenCV (close enough for perturbation)
-        lab = cv2.cvtColor(region.astype(np.uint8), cv2.COLOR_BGR2LAB).astype(np.float32)
-
-        # Push a* and b* channels outside natural range
-        # Direction: randomly push toward cold (blue) or warm (red/yellow)
-        direction = rng.choice([-1, 1])
-        shift_a = direction * severity * 60  # push a* far from [5,25]
-        shift_b = direction * severity * 60  # push b* far from [5,35]
-
-        lab[:, :, 1] = np.clip(lab[:, :, 1] + shift_a, 0, 255)
-        lab[:, :, 2] = np.clip(lab[:, :, 2] + shift_b, 0, 255)
-
-        modified = cv2.cvtColor(lab.astype(np.uint8), cv2.COLOR_LAB2BGR)
-        out[y1:y2, x1:x2] = modified
-
-    return out
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB).astype(np.float32)
+    lab[..., 1] = np.clip(lab[..., 1] + shift, 0, 255)
+    lab[..., 2] = np.clip(lab[..., 2] + shift, 0, 255)
+    return cv2.cvtColor(lab.astype(np.uint8), cv2.COLOR_LAB2BGR)
 
 
 def _color_cast_fallback(
@@ -414,7 +711,17 @@ def _color_cast_fallback(
 def _radial_distortion(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Barrel/pincushion distortion [Annex D.2.1]. Keep as-is."""
+    """Barrel distortion + smooth lens vignetting [Annex D.2.1].
+
+    Uses cv2.remap with a quadratic radial term to produce true lens
+    distortion. The corners that fall outside the source image after
+    distortion are then darkened by a smooth Gaussian-falloff vignette
+    (matching real wide-angle lens vignetting) instead of being filled
+    with hard inpainted texture or a black mask. The combined result
+    looks like a real wide-angle / fish-eye photograph.
+    """
+    if severity < 0.01:
+        return img
     h, w = img.shape[:2]
     cx, cy = w / 2, h / 2
     k = severity * 0.5
@@ -425,7 +732,21 @@ def _radial_distortion(
     scale = 1 + k * r2
     map_x = (cx + x_norm * scale * cx).astype(np.float32)
     map_y = (cy + y_norm * scale * cy).astype(np.float32)
-    return cv2.remap(img, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    distorted = cv2.remap(
+        img, map_x, map_y, cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_REPLICATE,
+    )
+
+    # Smooth radial vignette: cos^2 falloff scaled by severity. This is
+    # the standard Hopkins / cos^4(theta) lens-vignetting approximation
+    # truncated to a milder cos^2 so the effect is visible but doesn't
+    # crush corners to black.
+    r = np.sqrt(r2)  # 0 at center, ~sqrt(2) at corners
+    vignette = np.cos(np.clip(r, 0, 1) * np.pi / 2) ** 2  # 1 -> 0 at r=1
+    falloff = 1.0 - severity * 0.55 * (1.0 - vignette)
+    falloff = np.clip(falloff, 0.25, 1.0)[..., None]
+    out = distorted.astype(np.float32) * falloff
+    return np.clip(out, 0, 255).astype(np.uint8)
 
 
 # =========================================================================
@@ -435,88 +756,357 @@ def _radial_distortion(
 def _eyes_close_warp(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Warp upper eyelid landmarks toward lower to simulate eye closure [§7.4.3].
+    """Close the subject's eyes [§7.4.3].
 
     OFIQ measures min(max_pair_dist(LEFT_EYE), max_pair_dist(RIGHT_EYE)) / t.
-    Pairs: Left=(61,67),(62,66),(63,65); Right=(69,75),(70,74),(71,73).
-    We move upper eyelid landmarks toward their lower counterparts.
+
+    Method dispatch via env var (mirrors ExpressionNeutrality):
+
+    - ``OFIQ_SYNGEN_EXPRESSION_METHOD=ip2p`` -> InstructPix2Pix renders
+      photorealistic closed eyelids with proper eyelashes/skin (Phase 6).
+    - default -> TPS warp + skin painting fallback (Phase 5, fast,
+      lower fidelity).
+
+    The TPS path warps upper eyelid landmarks toward their lower pair
+    counterparts then composites a feathered skin patch (sampled from
+    the cheek) over the eye polygon to fake closed lids. Realistic at
+    low severity; at high severity the lack of real eyelid texture
+    becomes visible.
     """
     if ctx is None:
         return _eye_occlusion_fallback(img, severity, seed)
+    if severity < 0.01:
+        return img
+
+    import os
+    method = os.environ.get("OFIQ_SYNGEN_EXPRESSION_METHOD", "3dmm").lower()
+    if method in ("ip2p", "instructpix2pix", "instruct_pix2pix"):
+        try:
+            from ofiq_syngen.expression_diffusion import (
+                is_sd_available, render_eyes_closed_ip2p,
+            )
+            if is_sd_available():
+                return render_eyes_closed_ip2p(img, ctx, severity, seed)
+        except Exception:
+            pass  # fall through to TPS
 
     landmarks = ctx.landmarks_98.astype(np.float64)
     h, w = img.shape[:2]
 
-    # Collect control points: all 98 landmarks as identity, then
-    # override the upper eyelid landmarks with displaced versions
+    # Pre-process: heavily blur the eye region so ADNet cannot use iris
+    # detail (sclera/iris boundary, pupil center, eyelash texture) to
+    # find the original eye landmarks. Without this the warp + paint
+    # below is overruled by ADNet's iris-anchored re-detection.
+    img = _blur_eye_regions(img, ctx.landmarks_98, severity)
+
     src_points = landmarks.copy()
     dst_points = landmarks.copy()
 
+    # Move upper eyelid all the way to the lower at sev=1.0 (gap*1.0).
+    # v0.4 used 0.9 which left a small slit ADNet would still detect.
+    # Also pull lower lid up by a small fraction so the eye fully
+    # collapses on a wider region, not just a single pixel line.
     all_pairs = PAIRS_LEFT_EYE + PAIRS_RIGHT_EYE
     for upper_idx, lower_idx in all_pairs:
         upper = landmarks[upper_idx]
         lower = landmarks[lower_idx]
         gap = upper - lower
-        # Move upper toward lower by severity fraction
-        dst_points[upper_idx] = upper - gap * severity * 0.9
+        dst_points[upper_idx] = upper - gap * severity * 1.0
+        dst_points[lower_idx] = lower + gap * severity * 0.15
 
-    return _apply_rbf_warp(img, src_points, dst_points, seed)
+    warped = _apply_rbf_warp(img, src_points, dst_points, seed)
+
+    # Skin painting: ramp opacity in much earlier (severity > 0.1)
+    # and reach full opacity by 0.6, so ADNet sees skin (not warped
+    # iris) where the eye used to be, even at moderate severity.
+    paint_alpha = float(np.clip((severity - 0.1) / 0.5, 0.0, 1.0))
+    if paint_alpha <= 0.0:
+        return warped
+
+    return _paint_lid_skin(warped, ctx.landmarks_98, paint_alpha)
+
+
+def _blur_eye_regions(
+    img: np.ndarray, landmarks_98: np.ndarray, severity: float,
+) -> np.ndarray:
+    """Heavy median blur over each eye bounding-box, ramping with severity.
+
+    Strips iris/pupil/sclera detail so ADNet cannot anchor eye landmarks
+    to the original eye boundary after the close-warp. Without this the
+    warp + skin paint do not move OFIQ's EyesOpen scalar on most CelebA
+    crops -- ADNet just re-detects the eye at the unwarped spread.
+    """
+    if severity < 0.05:
+        return img
+    out = img.copy()
+    h, w = img.shape[:2]
+    ksize = max(3, int(severity * 25)) | 1  # odd, up to ~25
+    for eye_indices in (LEFT_EYE, RIGHT_EYE):
+        eye_pts = landmarks_98[eye_indices].astype(np.int32)
+        x, y, ew, eh = cv2.boundingRect(eye_pts)
+        # Pad bounding box outward so the blur covers eyelashes
+        pad_x, pad_y = ew // 2, eh // 2
+        x0 = max(0, x - pad_x); y0 = max(0, y - pad_y)
+        x1 = min(w, x + ew + pad_x); y1 = min(h, y + eh + pad_y)
+        roi = out[y0:y1, x0:x1]
+        if roi.size:
+            out[y0:y1, x0:x1] = cv2.medianBlur(roi, ksize)
+    return out
+
+
+def _paint_lid_skin(
+    img: np.ndarray, landmarks_98: np.ndarray, alpha_max: float,
+) -> np.ndarray:
+    """Sample local skin tone and composite a soft patch over each eye polygon."""
+    h, w = img.shape[:2]
+    out = img.astype(np.float32)
+    img_f = img.astype(np.float32)
+
+    for eye_indices in (LEFT_EYE, RIGHT_EYE):
+        eye_pts = landmarks_98[eye_indices].astype(np.int32)
+        x, y, ew, eh = cv2.boundingRect(eye_pts)
+        if ew < 4 or eh < 2:
+            continue
+
+        # Sample skin tone from a band just below the eye (cheek), which
+        # tends to be skin-only and well-lit. Fall back to the band above.
+        sample_h = max(2, eh // 2)
+        cheek_y1 = min(h, y + eh + max(2, eh // 4))
+        cheek_y2 = min(h, cheek_y1 + sample_h)
+        cheek_x1 = max(0, x)
+        cheek_x2 = min(w, x + ew)
+        if cheek_y2 - cheek_y1 < 1 or cheek_x2 - cheek_x1 < 1:
+            continue
+
+        cheek = img_f[cheek_y1:cheek_y2, cheek_x1:cheek_x2]
+        skin_bgr = cheek.reshape(-1, 3).mean(axis=0)
+
+        # Build a soft mask from the eye polygon. Inflate vertically a
+        # touch so the closed lid covers the full eye opening.
+        eye_mask = np.zeros((h, w), dtype=np.uint8)
+        hull = cv2.convexHull(eye_pts)
+        cv2.fillConvexPoly(eye_mask, hull, 1)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, max(3, eh // 3)))
+        eye_mask = cv2.dilate(eye_mask, kernel)
+        sigma = max(1.5, eh / 4)
+        soft = cv2.GaussianBlur(eye_mask.astype(np.float32), (0, 0), sigma)
+        soft = np.clip(soft, 0.0, 1.0) * alpha_max
+
+        # Build a per-pixel skin patch with subtle horizontal lash-line
+        # shading so the closed lid does not look like a flat decal.
+        patch = np.empty_like(img_f)
+        patch[..., 0] = skin_bgr[0]
+        patch[..., 1] = skin_bgr[1]
+        patch[..., 2] = skin_bgr[2]
+
+        # Lash line: a faint dark horizontal stripe near eye center
+        ys = np.arange(h, dtype=np.float32)
+        eye_cy = float(y + eh / 2)
+        lash = np.exp(-((ys - eye_cy) ** 2) / max(1.0, (eh / 6) ** 2))
+        lash_strength = 0.18  # darken by up to ~18% at the lash line
+        patch -= patch * (lash[:, None, None] * lash_strength)
+
+        a = soft[..., None]
+        out = out * (1 - a) + patch * a
+
+    return np.clip(out, 0, 255).astype(np.uint8)
 
 
 def _mouth_open_warp(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Warp inner lip landmarks apart to simulate mouth opening [§7.4.4].
+    """Open the mouth via TPS lip-warp + dark interior fill [§7.4.4].
 
-    OFIQ measures max_pair_dist(MOUTH_INNER_pairs) / t.
-    Pairs: (89,95),(90,94),(91,93).
-    We move upper inner lip UP and lower inner lip DOWN.
+    OFIQ measures max_pair_dist(MOUTH_INNER_pairs) / t with ADNet
+    landmarks 88-95 (upper inner 88-91, lower inner 92-95). To move
+    that scalar we need ADNet's re-detection on the warped image to
+    place the upper-inner and lower-inner landmarks farther apart.
+
+    A dark ellipse painted inside the closed lips is NOT enough --
+    ADNet treats unmoved lips as the mouth boundary regardless of
+    painted-on shadows, so max_pair_dist stays at its source value.
+    The fix: TPS-warp the lip landmarks themselves (push lower lip
+    down, upper lip up by severity * t * 0.20), then paint the dark
+    interior into the gap that opens up. The TPS displacement lets
+    ADNet re-detect the lip boundary at the new location, and the
+    dark fill keeps the synthesized gap from looking like a glitch.
     """
     if ctx is None:
         return _mouth_occlusion_fallback(img, severity, seed)
+    if severity < 0.01:
+        return img
 
-    landmarks = ctx.landmarks_98.astype(np.float64)
+    h, w = img.shape[:2]
     t = ctx.t_metric
+    landmarks = ctx.landmarks_98
 
-    src_points = landmarks.copy()
-    dst_points = landmarks.copy()
+    # ----- Step 1: TPS warp lower lip down + upper lip up so ADNet
+    # re-detects mouth_inner at the new (wider) positions.
+    # 15% of t per side: max OFIQ raw of ~0.30 (well past sigmoid x0=0.20,
+    # w=0.06). Past 0.18 per side the warp creates impossible geometry
+    # that confuses ADNet, causing non-monotonic scalar response.
+    open_amt = float(severity) * t * 0.15
+    # Source landmarks (lip outer + inner)
+    upper_outer = landmarks[[76, 77, 78, 79, 80, 81, 82]]
+    lower_outer = landmarks[[82, 83, 84, 85, 86, 87, 76]]
+    upper_inner = landmarks[[88, 89, 90, 91]]
+    lower_inner = landmarks[[92, 93, 94, 95]]
+    # Target: move uppers up, lowers down
+    src_pts = np.vstack([upper_outer, lower_outer, upper_inner, lower_inner]).astype(np.float32)
+    dst_pts = src_pts.copy()
+    dst_pts[:7, 1] -= open_amt * 0.5  # upper outer up
+    dst_pts[7:14, 1] += open_amt * 0.5  # lower outer down
+    dst_pts[14:18, 1] -= open_amt  # upper inner up (more)
+    dst_pts[18:22, 1] += open_amt  # lower inner down (more)
+    # Anchor non-mouth region with corner + edge midpoint pins
+    anchors = np.array(
+        [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1],
+         [w // 2, 0], [w // 2, h - 1], [0, h // 2], [w - 1, h // 2]],
+        dtype=np.float32,
+    )
+    src_pts = np.vstack([src_pts, anchors])
+    dst_pts = np.vstack([dst_pts, anchors])
+    try:
+        from scipy.interpolate import RBFInterpolator
+        # Inverse displacement field: (dst -> src) so cv2.remap can
+        # sample the source image at the right location.
+        dx = src_pts[:, 0] - dst_pts[:, 0]
+        dy = src_pts[:, 1] - dst_pts[:, 1]
+        rbf_x = RBFInterpolator(dst_pts, dx, kernel="thin_plate_spline", smoothing=1.0)
+        rbf_y = RBFInterpolator(dst_pts, dy, kernel="thin_plate_spline", smoothing=1.0)
+        gy, gx = np.mgrid[0:h:4, 0:w:4].astype(np.float32)
+        pts = np.column_stack([gx.ravel(), gy.ravel()])
+        disp_x = rbf_x(pts).reshape(gx.shape).astype(np.float32)
+        disp_y = rbf_y(pts).reshape(gx.shape).astype(np.float32)
+        map_x_lo = (gx + disp_x).astype(np.float32)
+        map_y_lo = (gy + disp_y).astype(np.float32)
+        map_x = cv2.resize(map_x_lo, (w, h), interpolation=cv2.INTER_LINEAR)
+        map_y = cv2.resize(map_y_lo, (w, h), interpolation=cv2.INTER_LINEAR)
+        img = cv2.remap(img, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+    except Exception:
+        pass
 
-    displacement = severity * t * 0.25
+    # Geometry: center of the mouth opening = midpoint of inner lip pairs
+    upper_inner = landmarks[[88, 89, 90, 91]].mean(axis=0)
+    lower_inner = landmarks[[92, 93, 94, 95]].mean(axis=0)
+    center = (upper_inner + lower_inner) / 2
 
-    # Upper inner lip landmarks: 88, 89, 90, 91
-    for idx in [88, 89, 90, 91]:
-        dst_points[idx, 1] -= displacement  # move up
+    # Width = distance between mouth corners (76 outer right, 82 outer left)
+    corners = landmarks[[76, 82]]
+    mouth_width = float(np.linalg.norm(corners[1] - corners[0]))
 
-    # Lower inner lip landmarks: 92, 93, 94, 95
-    for idx in [92, 93, 94, 95]:
-        dst_points[idx, 1] += displacement  # move down
+    # Ellipse axes:
+    #   Horizontal: ~50% of mouth width (sits inside lips, not on them)
+    #   Vertical: severity * t * 0.30 (target raw=0.30 at sev=1.0, well
+    #   past OFIQ MouthClosed sigmoid x0=0.2, w=0.06 — so the scalar
+    #   actually drops). v0.4 used 0.14 which kept raw at ~0.10
+    #   regardless of severity; the painted ellipse was too small to
+    #   move ADNet's mouth_inner landmark detection. Cap at the full
+    #   mouth_width/2 (round-mouth limit) instead of 35% (under-cap
+    #   that matched the v0.4 too-small-ellipse problem).
+    ax_x = max(4, int(mouth_width * 0.45))
+    ax_y_max = max(3, int(mouth_width * 0.55))
+    ax_y = int(min(ax_y_max, severity * t * 0.30))
+    if ax_y < 2:
+        return img
 
-    # Also move outer mouth landmarks proportionally (smaller displacement)
-    outer_displacement = displacement * 0.3
-    # Upper outer: 76, 77, 78 (right side), 82, 83, 84 (left side)
-    for idx in [77, 78, 83, 84]:
-        dst_points[idx, 1] -= outer_displacement
-    # Lower outer: 79, 80, 81, 85, 86, 87
-    for idx in [80, 81, 86, 87]:
-        dst_points[idx, 1] += outer_displacement
+    # Sample the natural mouth-shadow color from a 3x3 patch at the
+    # current lip-line center (preserves white balance).
+    cy_int, cx_int = int(center[1]), int(center[0])
+    patch = img[max(0, cy_int - 1):cy_int + 2, max(0, cx_int - 1):cx_int + 2]
+    if patch.size:
+        base_color = patch.reshape(-1, 3).mean(axis=0) * 0.35  # darken
+    else:
+        base_color = np.array([20, 15, 25], dtype=np.float32)
+    base_color = np.clip(base_color, 0, 60).astype(int).tolist()
 
-    return _apply_rbf_warp(img, src_points, dst_points, seed)
+    # Build the dark mouth interior with a subtle dental hint:
+    #   1. Dominant dark fill (the OFIQ-detectable mouth opening)
+    #   2. Thin lighter band near the top (suggests upper teeth)
+    #   3. Subtle red gum line at the very top edge (anatomical)
+    # The dark fill dominates so ADNet still detects the lip / interior
+    # boundary correctly; the dental hint just makes it look less like
+    # a flat black hole.
+    interior = np.full_like(img, base_color, dtype=np.uint8)
+
+    # Teeth band: top ~25% of ellipse, slightly lighter than interior.
+    teeth_color = (np.array(base_color, dtype=np.float32) * 1.6
+                   + np.array([180, 180, 175], dtype=np.float32) * 0.45)
+    teeth_color = np.clip(teeth_color, 0, 165).astype(np.uint8)
+    teeth_mask = np.zeros((h, w), dtype=np.uint8)
+    teeth_y_top = cy_int - ax_y + max(1, ax_y // 6)
+    teeth_y_bot = cy_int - max(0, int(ax_y * 0.15))
+    cv2.ellipse(
+        teeth_mask,
+        (cx_int, cy_int),
+        (max(2, ax_x - 2), ax_y),
+        0, 0, 360, 255, -1,
+    )
+    # Restrict teeth band vertically
+    teeth_band = np.zeros((h, w), dtype=np.uint8)
+    teeth_band[teeth_y_top:teeth_y_bot, :] = teeth_mask[teeth_y_top:teeth_y_bot, :]
+
+    interior_with_teeth = interior.copy()
+    teeth_alpha = (cv2.GaussianBlur(teeth_band.astype(np.float32), (0, 0), 1.0)
+                   / 255.0)[..., None] * 0.55
+    interior_with_teeth = (interior.astype(np.float32) * (1 - teeth_alpha)
+                            + teeth_color.astype(np.float32) * teeth_alpha)
+
+    # Gum hint: 1-2 px red ring at the very top
+    gum_color = np.array([60, 30, 95], dtype=np.uint8)  # dark red-pink (BGR)
+    gum_band = np.zeros((h, w), dtype=np.uint8)
+    gum_y = cy_int - ax_y + 1
+    cv2.line(gum_band, (cx_int - ax_x, gum_y), (cx_int + ax_x, gum_y), 255, 1)
+    gum_alpha = (cv2.GaussianBlur(gum_band.astype(np.float32), (0, 0), 1.0)
+                 / 255.0)[..., None] * 0.45
+    interior_with_teeth = (interior_with_teeth.astype(np.float32) * (1 - gum_alpha)
+                           + gum_color.astype(np.float32) * gum_alpha)
+
+    # Composite the styled interior into the image via the ellipse mask
+    ellipse_mask = np.zeros((h, w), dtype=np.uint8)
+    cv2.ellipse(
+        ellipse_mask,
+        (cx_int, cy_int),
+        (ax_x, ax_y),
+        0, 0, 360, 255, -1,
+    )
+    soft = cv2.GaussianBlur(ellipse_mask.astype(np.float32), (0, 0), 1.5)
+    soft = np.clip(soft / 255.0, 0.0, 1.0)[..., None]
+
+    out = (img.astype(np.float32) * (1 - soft)
+           + interior_with_teeth.astype(np.float32) * soft)
+    return np.clip(out, 0, 255).astype(np.uint8)
 
 
 def _eye_occlusion_evz(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Render realistic sunglasses over the Eye Visibility Zone [§7.4.5].
+    """Render sunglasses over the Eye Visibility Zone [§7.4.5].
 
-    With FaceContext: uses ``occluders.render_sunglasses()`` to render
-    photorealistic sunglasses (elliptical lenses, frame, bridge, drop
-    shadow) positioned via EVZ landmarks.
+    Method dispatch via env var:
 
-    Without FaceContext: falls back to a horizontal dark band placed
-    where eyes typically are (lower fidelity).
+    - ``OFIQ_SYNGEN_EXPRESSION_METHOD=ip2p`` -> InstructPix2Pix renders
+      photorealistic sunglasses with proper frame, lens darkness, and
+      light interaction (Phase 6).
+    - default -> procedural occluder via ``occluders.render_sunglasses()``
+      (Phase 3, fast, looks pasted on).
     """
     if ctx is None:
         return _eye_occlusion_fallback(img, severity, seed)
+    if severity < 0.01:
+        return img
+
+    import os
+    method = os.environ.get("OFIQ_SYNGEN_EXPRESSION_METHOD", "3dmm").lower()
+    if method in ("ip2p", "instructpix2pix", "instruct_pix2pix"):
+        try:
+            from ofiq_syngen.expression_diffusion import (
+                is_sd_available, render_sunglasses_ip2p,
+            )
+            if is_sd_available():
+                return render_sunglasses_ip2p(img, ctx, severity, seed)
+        except Exception:
+            pass
 
     from ofiq_syngen.occluders import render_sunglasses
     return render_sunglasses(img, ctx, severity, seed)
@@ -539,17 +1129,31 @@ def _eye_occlusion_fallback(
 def _mouth_occlusion_polygon(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Render realistic surgical mask over the mouth region [§7.4.6].
+    """Render a surgical mask over the mouth region [§7.4.6].
 
-    With FaceContext: uses ``occluders.render_surgical_mask()`` to render
-    a photorealistic pleated surgical mask conforming to nose-bridge,
-    jaw, and chin landmarks. Severity controls coverage extent (mouth
-    only at low severity, full nose-to-chin at high severity).
+    Method dispatch via env var:
 
-    Without FaceContext: falls back to a band over the mouth region.
+    - ``OFIQ_SYNGEN_EXPRESSION_METHOD=ip2p`` -> InstructPix2Pix renders
+      a photorealistic surgical mask conforming to face geometry.
+    - default -> procedural pleated surgical mask via
+      ``occluders.render_surgical_mask()`` (looks pasted on).
     """
     if ctx is None:
         return _mouth_occlusion_fallback(img, severity, seed)
+    if severity < 0.01:
+        return img
+
+    import os
+    method = os.environ.get("OFIQ_SYNGEN_EXPRESSION_METHOD", "3dmm").lower()
+    if method in ("ip2p", "instructpix2pix", "instruct_pix2pix"):
+        try:
+            from ofiq_syngen.expression_diffusion import (
+                is_sd_available, render_surgical_mask_ip2p,
+            )
+            if is_sd_available():
+                return render_surgical_mask_ip2p(img, ctx, severity, seed)
+        except Exception:
+            pass
 
     from ofiq_syngen.occluders import render_surgical_mask
     return render_surgical_mask(img, ctx, severity, seed)
@@ -572,16 +1176,31 @@ def _mouth_occlusion_fallback(
 def _face_region_occlusion(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Render realistic occluder over the face region [§7.4.7].
+    """Render an occluder over the face region [§7.4.7].
 
-    With FaceContext: uses ``occluders.render_hand_occluder()`` to render
-    a skin-tone-matched hand silhouette over the lower face. Hand size
-    scales with severity, with drop shadow and feathered edges.
+    Method dispatch via env var:
 
-    Without FaceContext: falls back to a random rectangular fill.
+    - ``OFIQ_SYNGEN_EXPRESSION_METHOD=ip2p`` -> InstructPix2Pix renders
+      a photorealistic hand covering the face (Phase 6).
+    - default -> procedural skin-tone-matched hand silhouette
+      (Phase 3, fast, looks like a brown blob).
     """
     if ctx is None:
         return _rect_occlusion_fallback(img, severity, seed)
+    if severity < 0.01:
+        return img
+
+    import os
+    method = os.environ.get("OFIQ_SYNGEN_EXPRESSION_METHOD", "3dmm").lower()
+    if method in ("ip2p", "instructpix2pix", "instruct_pix2pix"):
+        try:
+            from ofiq_syngen.expression_diffusion import (
+                is_sd_available, render_hand_occluder_ip2p,
+            )
+            if is_sd_available():
+                return render_hand_occluder_ip2p(img, ctx, severity, seed)
+        except Exception:
+            pass
 
     from ofiq_syngen.occluders import render_hand_occluder
     return render_hand_occluder(img, ctx, severity, seed)
@@ -618,76 +1237,283 @@ def _reduce_ied(
     scale = max(0.3, 1.0 - severity * 0.7)
 
     new_h, new_w = max(4, int(h * scale)), max(4, int(w * scale))
-    small = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
-
-    # Center in canvas with border replication
-    canvas = np.zeros_like(img)
-    # Fill canvas with border-replicated content
     pad_top = (h - new_h) // 2
     pad_left = (w - new_w) // 2
 
+    # Flat-backdrop fill: the OFIQ HeadSize/IED metric only cares about
+    # landmark positions, so any uniform fill works. Use the source
+    # image's background mean color so the fill matches the source
+    # palette without introducing gradients (which would confound the
+    # BackgroundUniformity component).
+    bg_color = _sample_backdrop_color(img, ctx)
+    canvas = np.full_like(img, bg_color, dtype=np.uint8)
+    small = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
     canvas[pad_top:pad_top + new_h, pad_left:pad_left + new_w] = small
-
-    # Fill borders by replicating edge pixels
-    if pad_top > 0:
-        canvas[:pad_top, pad_left:pad_left + new_w] = small[0:1, :]
-    if pad_top + new_h < h:
-        canvas[pad_top + new_h:, pad_left:pad_left + new_w] = small[-1:, :]
-    if pad_left > 0:
-        canvas[:, :pad_left] = canvas[:, pad_left:pad_left + 1]
-    if pad_left + new_w < w:
-        canvas[:, pad_left + new_w:] = canvas[:, pad_left + new_w - 1:pad_left + new_w]
-
     return canvas
 
 
 def _reduce_head_size(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Shrink face in frame to reduce t/imageHeight ratio [§7.4.9].
+    """Zoom-in head-size perturbation [§7.4.9].
 
-    OFIQ measures |t/imageHeight - 0.45| (optimal ~0.45).
-    Same pad-and-shrink mechanism as IED.
+    OFIQ measures |t/imageHeight - 0.45| with sigmoid x0=0, w=0.05.
+    The optimum is t/imageHeight = 0.45; both higher AND lower raw
+    degrade. Most natural face imagery has raw ~0.20 (face takes up
+    ~20% of image height), so the v0.4 shrink-only operator drove
+    scalar from ~2 to 0 with no real movement (already at the floor
+    of the lower-degradation side).
+
+    v0.5 zooms IN instead: severity 0..1 -> zoom 1x..3x, which
+    pushes raw past 0.45 and into the upper-degradation regime where
+    the OFIQ scalar has ~80 points of headroom. Side-effect: at low
+    severity the scalar will pass through 100 (near the optimum)
+    before degrading again as zoom continues. This non-monotonic
+    behavior is the price of having ANY measurable degradation on
+    typical natural-portrait test images. ctx.t_metric is unreliable
+    relative to OFIQ's measurement (different alignment basis) so we
+    don't try to detect direction.
     """
-    return _reduce_ied(img, severity, seed, ctx)
+    if severity < 0.01:
+        return img
+    return _zoom_in_face(img, severity, ctx)
+
+
+def _zoom_in_face(
+    img: np.ndarray, severity: float, ctx: FaceContext | None,
+) -> np.ndarray:
+    """Crop a smaller window around the face landmarks and upscale.
+
+    Drives OFIQ HeadSize raw above 0.45 by making the face fill more
+    of the image height after the upscale. Center the crop on the
+    face landmark centroid (when ctx is present), else on the image
+    center.
+    """
+    h, w = img.shape[:2]
+    zoom = 1.0 + float(severity) * 1.5  # 1x..2.5x (3x can break OFIQ face alignment)
+    crop_h = max(8, int(h / zoom))
+    crop_w = max(8, int(w / zoom))
+    if ctx is not None and getattr(ctx, "landmarks_98", None) is not None:
+        center = ctx.landmarks_98.mean(axis=0)
+        cx, cy = float(center[0]), float(center[1])
+    else:
+        cx, cy = w / 2, h / 2
+    x0 = int(np.clip(cx - crop_w / 2, 0, w - crop_w))
+    y0 = int(np.clip(cy - crop_h / 2, 0, h - crop_h))
+    cropped = img[y0:y0 + crop_h, x0:x0 + crop_w]
+    return cv2.resize(cropped, (w, h), interpolation=cv2.INTER_LINEAR)
 
 
 # =========================================================================
 # Section 8 -- Geometric/Pose Components
 # =========================================================================
 
+_3D_PIPELINE = None
+
+
+def _get_3d_pipeline():
+    """Singleton 3D pipeline (DECA + FLAME + pyrender). Lazy-loaded on
+    first use; ~2.4s cold start, ~0.4s per call after."""
+    global _3D_PIPELINE
+    if _3D_PIPELINE is None:
+        try:
+            from ofiq_syngen.three_d.pipeline import DegradationPipeline as P3D
+            _3D_PIPELINE = P3D()
+        except Exception:
+            _3D_PIPELINE = False
+    return _3D_PIPELINE if _3D_PIPELINE is not False else None
+
+
 def _yaw_rotation(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Simulated yaw via perspective warp [§7.4.11 yaw/pitch/roll]. Kept with calibration note."""
+    """Yaw rotation [§7.4.11 yaw/pitch/roll].
+
+    Tier 1: True 3D rotation via FLAME mesh fit (DECA) + pyrender.
+        Source-textured mesh, real anatomical rotation, sev 0..1 -> 0..35°.
+    Tier 2: 2D TPS dense BFM warp (with hair-landmark TPS), capped at ±10°.
+    Tier 3: 2D perspective squeeze, capped at ±0.5 severity.
+    """
+    if severity < 0.01:
+        return img
+
+    # Tier 1: 3D FLAME rotation
+    pipe = _get_3d_pipeline()
+    if pipe is not None:
+        try:
+            out, _ = pipe.degrade_single(
+                img, "HeadPoseYaw.scalar", severity=severity, seed=seed,
+            )
+            return out
+        except Exception:
+            pass
+
+    if ctx is not None and getattr(ctx, "raw_3ddfa_params", None) is not None:
+        # Source-yaw direction: contour asymmetry on ADNet landmarks is
+        # the most reliable signal we have — when the face is yawed
+        # toward observer-right (OFIQ yaw > 0), the LEFT contour points
+        # spread further from the chin than the right (anti-symmetric).
+        # ctx.head_pose disagrees with OFIQ's binary on most CelebA
+        # crops (sign-inverted on 2 of 3 test images), so use it only
+        # as a tie-breaker when contour asymmetry is below threshold.
+        direction = 0.0
+        try:
+            from ofiq_syngen.landmark_utils import CONTOUR
+            contour = ctx.landmarks_98[CONTOUR]
+            chin_x = contour[16, 0]
+            left_extent = abs(chin_x - contour[:16, 0].min())
+            right_extent = abs(contour[17:, 0].max() - chin_x)
+            asym = (right_extent - left_extent) / max(right_extent + left_extent, 1)
+            # Invert: contour asymmetry is anti-correlated with OFIQ yaw.
+            if abs(asym) >= 0.10:
+                direction = 1.0 if asym <= 0 else -1.0
+        except Exception:
+            pass
+        if direction == 0.0 and getattr(ctx, "head_pose", None) is not None and abs(ctx.head_pose[0]) >= 5.0:
+            direction = 1.0 if ctx.head_pose[0] >= 0 else -1.0
+        if direction == 0.0:
+            rng = np.random.RandomState(seed)
+            direction = float(rng.choice([-1, 1]))
+        try:
+            from ofiq_syngen.face_3dmm_dense import (
+                is_dense_available, render_pose_dense,
+            )
+            if is_dense_available():
+                # Cap at 5deg: BFM TPS warp produces non-monotonic OFIQ
+                # response past ~5deg (yaw_deg=10 actually degrades less
+                # than yaw_deg=5 because the OFIQ pose model misfires on
+                # the warped output).
+                yaw_deg = float(min(severity, 1.0) * 5.0 * direction)
+                return render_pose_dense(img, ctx, yaw_deg=yaw_deg)
+        except Exception:
+            pass
+        try:
+            from ofiq_syngen.face_3dmm_nvdiff import (
+                is_nvdiff_available, render_pose_nvdiff,
+            )
+            if is_nvdiff_available():
+                yaw_deg = float(min(severity, 1.0) * 5.0 * direction)
+                return render_pose_nvdiff(img, ctx, yaw_deg=yaw_deg)
+        except Exception:
+            pass
+
     h, w = img.shape[:2]
-    rng = np.random.RandomState(seed)
-    direction = rng.choice([-1, 1])
-    squeeze = severity * 0.5 * direction
+    # Source yaw direction detection: try ctx.head_pose first (OFIQ-aligned
+    # head pose model), fall back to ctx.raw_3ddfa_params, then seed-rng.
+    # Empirically the perspective-squeeze direction needs to oppose the
+    # squeeze convention: NEGATIVE squeeze adds yaw on a face already
+    # turned positive-yaw direction. We explicitly invert here so positive
+    # source_yaw -> negative squeeze (which ADDS yaw per our earlier
+    # measurement: squeeze=-0.3 on yaw=+21deg face gave yaw=+23deg).
+    src_yaw_sign = 0.0
+    if ctx is not None:
+        if getattr(ctx, "head_pose", None) is not None and abs(ctx.head_pose[0]) >= 5.0:
+            src_yaw_sign = 1.0 if ctx.head_pose[0] >= 0 else -1.0
+        elif getattr(ctx, "raw_3ddfa_params", None) is not None:
+            try:
+                from ofiq_syngen.face_3dmm import parse_3ddfa_params
+                R, _, _, _ = parse_3ddfa_params(ctx.raw_3ddfa_params)
+                src_yaw = float(np.arcsin(np.clip(R[0, 2], -1, 1)))
+                if abs(src_yaw) >= 0.1:
+                    src_yaw_sign = 1.0 if src_yaw >= 0 else -1.0
+            except Exception:
+                pass
+    if src_yaw_sign != 0.0:
+        # Negative squeeze adds yaw on a positive-yaw source.
+        direction = -src_yaw_sign
+    else:
+        rng = np.random.RandomState(seed)
+        direction = float(rng.choice([-1, 1]))
+    # Push amplitude to 0.40 max (vs old 0.25). At 0.45+ OFIQ face
+    # alignment fails (-1 sentinel), so 0.40 is the safe ceiling.
+    squeeze = float(min(severity, 1.0)) * 0.40 * direction
     src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
     if squeeze > 0:
         dst = np.float32([[0, int(h * squeeze)], [w, 0], [w, h], [0, int(h * (1 - squeeze))]])
     else:
         dst = np.float32([[0, 0], [w, int(h * (-squeeze))], [w, int(h * (1 + squeeze))], [0, h]])
     M = cv2.getPerspectiveTransform(src, dst)
-    return cv2.warpPerspective(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    return _warp_with_inpaint(
+        img,
+        lambda src_, mode, val: cv2.warpPerspective(
+            src_, M, (w, h), borderMode=mode, borderValue=val,
+        ),
+    )
 
 
 def _pitch_tilt(
     img: np.ndarray, severity: float, seed: int, ctx: FaceContext | None = None,
 ) -> np.ndarray:
-    """Simulated pitch via perspective warp [§7.4.11 yaw/pitch/roll]. Kept with calibration note."""
+    """Pitch rotation [§7.4.11 yaw/pitch/roll]. Same tiering as yaw."""
+    if severity < 0.01:
+        return img
+
+    pipe = _get_3d_pipeline()
+    if pipe is not None:
+        try:
+            out, _ = pipe.degrade_single(
+                img, "HeadPosePitch.scalar", severity=severity, seed=seed,
+            )
+            return out
+        except Exception:
+            pass
+
+    # Pose-aware direction (same approach as yaw)
+    src_pitch_sign = 0.0
+    if (
+        ctx is not None
+        and getattr(ctx, "head_pose", None) is not None
+        and abs(ctx.head_pose[1]) >= 5.0
+    ):
+        src_pitch_sign = 1.0 if ctx.head_pose[1] >= 0 else -1.0
+
+    if ctx is not None and getattr(ctx, "raw_3ddfa_params", None) is not None:
+        if src_pitch_sign != 0.0:
+            direction = src_pitch_sign
+        else:
+            rng = np.random.RandomState(seed)
+            direction = float(rng.choice([-1, 1]))
+        # Prefer dense BFM TPS (hair rotates with head)
+        try:
+            from ofiq_syngen.face_3dmm_dense import (
+                is_dense_available, render_pose_dense,
+            )
+            if is_dense_available():
+                pitch_deg = float(min(severity, 1.0) * 10.0 * direction)
+                return render_pose_dense(img, ctx, pitch_deg=pitch_deg)
+        except Exception:
+            pass
+        try:
+            from ofiq_syngen.face_3dmm_nvdiff import (
+                is_nvdiff_available, render_pose_nvdiff,
+            )
+            if is_nvdiff_available():
+                pitch_deg = float(min(severity, 1.0) * 10.0 * direction)
+                return render_pose_nvdiff(img, ctx, pitch_deg=pitch_deg)
+        except Exception:
+            pass
+
     h, w = img.shape[:2]
-    rng = np.random.RandomState(seed)
-    direction = rng.choice([-1, 1])
-    squeeze = severity * 0.4 * direction
+    if src_pitch_sign != 0.0:
+        # Negative perspective squeeze adds positive pitch (same convention
+        # as yaw operator above); invert the sign to ADD to source pitch.
+        direction = -src_pitch_sign
+    else:
+        rng = np.random.RandomState(seed)
+        direction = float(rng.choice([-1, 1]))
+    squeeze = float(min(severity, 1.0)) * 0.40 * direction
     src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
     if squeeze > 0:
         dst = np.float32([[int(w * squeeze), 0], [int(w * (1 - squeeze)), 0], [w, h], [0, h]])
     else:
         dst = np.float32([[0, 0], [w, 0], [int(w * (1 + squeeze)), h], [int(w * (-squeeze)), h]])
     M = cv2.getPerspectiveTransform(src, dst)
-    return cv2.warpPerspective(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    return _warp_with_inpaint(
+        img,
+        lambda src_, mode, val: cv2.warpPerspective(
+            src_, M, (w, h), borderMode=mode, borderValue=val,
+        ),
+    )
 
 
 def _roll_rotation(
@@ -698,7 +1524,12 @@ def _roll_rotation(
     rng = np.random.RandomState(seed)
     angle = severity * 30 * rng.choice([-1, 1])
     M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1.0)
-    return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    return _warp_with_inpaint(
+        img,
+        lambda src, mode, val: cv2.warpAffine(
+            src, M, (w, h), borderMode=mode, borderValue=val,
+        ),
+    )
 
 
 def _crop_left(
@@ -714,7 +1545,13 @@ def _crop_left(
     h, w = img.shape[:2]
     shift_x = -int(severity * w * 0.4)  # negative = content moves left = face moves left
     M = np.float32([[1, 0, shift_x], [0, 1, 0]])
-    return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    return _warp_with_flat_backdrop(
+        img,
+        lambda src, mode, val: cv2.warpAffine(
+            src, M, (w, h), borderMode=mode, borderValue=val,
+        ),
+        ctx,
+    )
 
 
 def _crop_right(
@@ -729,7 +1566,13 @@ def _crop_right(
     h, w = img.shape[:2]
     shift_x = int(severity * w * 0.4)  # positive = content moves right = face moves right
     M = np.float32([[1, 0, shift_x], [0, 1, 0]])
-    return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    return _warp_with_flat_backdrop(
+        img,
+        lambda src, mode, val: cv2.warpAffine(
+            src, M, (w, h), borderMode=mode, borderValue=val,
+        ),
+        ctx,
+    )
 
 
 def _margin_above(
@@ -744,7 +1587,13 @@ def _margin_above(
     h, w = img.shape[:2]
     shift_y = -int(severity * h * 0.4)  # negative = content moves up = face moves up
     M = np.float32([[1, 0, 0], [0, 1, shift_y]])
-    return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    return _warp_with_flat_backdrop(
+        img,
+        lambda src, mode, val: cv2.warpAffine(
+            src, M, (w, h), borderMode=mode, borderValue=val,
+        ),
+        ctx,
+    )
 
 
 def _margin_below(
@@ -759,7 +1608,13 @@ def _margin_below(
     h, w = img.shape[:2]
     shift_y = int(severity * h * 0.4)  # positive = content moves down = face moves down
     M = np.float32([[1, 0, 0], [0, 1, shift_y]])
-    return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    return _warp_with_flat_backdrop(
+        img,
+        lambda src, mode, val: cv2.warpAffine(
+            src, M, (w, h), borderMode=mode, borderValue=val,
+        ),
+        ctx,
+    )
 
 
 # =========================================================================
@@ -816,7 +1671,12 @@ def _apply_rbf_warp(
     map_x = cv2.resize(map_x_small, (w, h), interpolation=cv2.INTER_LINEAR)
     map_y = cv2.resize(map_y_small, (w, h), interpolation=cv2.INTER_LINEAR)
 
-    return cv2.remap(img, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    return _warp_with_inpaint(
+        img,
+        lambda src, mode, val: cv2.remap(
+            src, map_x, map_y, cv2.INTER_LINEAR, borderMode=mode, borderValue=val,
+        ),
+    )
 
 
 # =========================================================================
@@ -852,8 +1712,12 @@ _register("IlluminationUniformity.scalar", _uneven_illumination_roi,
 # S6.3 Moments of Luminance Distribution
 _register("LuminanceMean.scalar", _darken_face,
           "Face-masked darkening [§7.3.4]", "factor: 1.0 -> 0.15", needs_ctx=True)
-_register("LuminanceVariance.scalar", _reduce_luminance_variance_face,
-          "Face-masked variance compression [§7.3.4]", "factor: 1.0 -> 0.1", needs_ctx=True)
+_register(
+    "LuminanceVariance.scalar", _reduce_luminance_variance_face,
+    "Bidirectional face variance perturbation [§7.3.4]",
+    "factor: 1x -> 5x (expand) or 1x -> 0.02x (compress)",
+    needs_ctx=True,
+)
 
 # S6.4 Over- and Under-Exposure Prevention
 _register("UnderExposurePrevention.scalar", _darken_face_with_occlusion,

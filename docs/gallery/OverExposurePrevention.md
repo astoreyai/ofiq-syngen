@@ -1,6 +1,6 @@
 # OverExposurePrevention.scalar
 
-![OverExposurePrevention.scalar severity strip](gallery/images/OverExposurePrevention_strip.png)
+![OverExposurePrevention.scalar severity strip](images/OverExposurePrevention_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

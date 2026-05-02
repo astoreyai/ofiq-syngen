@@ -1,6 +1,6 @@
 # CompressionArtifacts.scalar
 
-![CompressionArtifacts.scalar severity strip](gallery/images/CompressionArtifacts_strip.png)
+![CompressionArtifacts.scalar severity strip](images/CompressionArtifacts_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

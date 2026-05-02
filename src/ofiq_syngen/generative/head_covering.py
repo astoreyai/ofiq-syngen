@@ -41,6 +41,19 @@ def add_head_covering(
         return img
 
     if ctx is not None:
+        # Prefer IP2P (photoreal beanie) when available
+        import os
+        method = os.environ.get("OFIQ_SYNGEN_EXPRESSION_METHOD", "3dmm").lower()
+        if method in ("ip2p", "instructpix2pix", "instruct_pix2pix"):
+            try:
+                from ofiq_syngen.expression_diffusion import (
+                    is_sd_available, render_hat_ip2p,
+                )
+                if is_sd_available():
+                    return render_hat_ip2p(img, ctx, severity, seed)
+            except Exception:
+                pass
+
         from ofiq_syngen.occluders import render_hat
         return render_hat(img, ctx, severity, seed)
 

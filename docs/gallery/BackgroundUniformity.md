@@ -1,6 +1,6 @@
 # BackgroundUniformity.scalar
 
-![BackgroundUniformity.scalar severity strip](gallery/images/BackgroundUniformity_strip.png)
+![BackgroundUniformity.scalar severity strip](images/BackgroundUniformity_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

@@ -1,6 +1,6 @@
 # InterEyeDistance.scalar
 
-![InterEyeDistance.scalar severity strip](gallery/images/InterEyeDistance_strip.png)
+![InterEyeDistance.scalar severity strip](images/InterEyeDistance_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

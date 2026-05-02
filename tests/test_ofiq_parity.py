@@ -48,33 +48,65 @@ def _ofiq_binary_available() -> bool:
 
 
 def _resolve_image_path(image_id: str) -> Path | None:
+    """Resolve an image_id to its on-disk path.
+
+    Manifest stores paths relative to its own directory
+    (``tests/fixtures/ofiq_parity/``), so we anchor on
+    ``MANIFEST_PATH.parent``. The fallback up one level preserves the
+    pre-v0.5 layout where images lived under ``tests/fixtures/images/``.
+    """
     entry = _IMAGE_SET.get(image_id)
     if entry is None:
         return None
-    candidate = MANIFEST_PATH.parent.parent / entry["path"]
-    if candidate.exists():
-        return candidate
+    for base in (MANIFEST_PATH.parent, MANIFEST_PATH.parent.parent):
+        candidate = base / entry["path"]
+        if candidate.exists():
+            return candidate
     return None
 
 
 def _run_ofiq(image_path: Path) -> dict[str, float]:
-    """Invoke the OFIQ binary, return per-component scores."""
+    """Invoke the OFIQ 1.1.0 SampleApp, return per-component scores.
+
+    OFIQ 1.1.0 CLI: ``-c <configDir> -i <inputFile> -o <outputFile>``
+    (no ``-l`` listing flag). Output is semicolon-delimited CSV.
+    """
     binary = Path(os.environ[OFIQ_BINARY_ENV])
+    env_data = os.environ.get("OFIQ_DATA_DIR")
+    if env_data:
+        config_dir = Path(env_data)
+    else:
+        candidate = binary.resolve().parent
+        for _ in range(6):
+            if (candidate / "data").is_dir() and (candidate / "data" / "models").is_dir():
+                config_dir = candidate / "data"
+                break
+            candidate = candidate.parent
+        else:
+            raise FileNotFoundError(
+                f"OFIQ data directory not found relative to {binary}. "
+                "Set OFIQ_DATA_DIR environment variable."
+            )
     with tempfile.TemporaryDirectory() as td:
-        td_path = Path(td)
-        list_path = td_path / "list.csv"
-        list_path.write_text(str(image_path) + "\n")
-        out_csv = td_path / "scores.csv"
+        out_csv = Path(td) / "scores.csv"
         subprocess.run(
-            [str(binary), "-l", str(list_path), "-o", str(out_csv)],
+            [
+                str(binary),
+                "-c", str(config_dir),
+                "-i", str(image_path),
+                "-o", str(out_csv),
+            ],
             check=True, capture_output=True,
         )
         import csv
-        rows = list(csv.DictReader(out_csv.open()))
-        return {
-            k: float(v) for k, v in rows[0].items()
-            if v not in ("", None)
-        }
+        rows = list(csv.DictReader(out_csv.open(), delimiter=";"))
+        out = {}
+        for k, v in rows[0].items():
+            try:
+                out[k] = float(v)
+            except (ValueError, TypeError):
+                continue
+        return out
 
 
 @pytest.mark.skipif(

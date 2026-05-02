@@ -1,6 +1,6 @@
 # FaceOcclusionPrevention.scalar
 
-![FaceOcclusionPrevention.scalar severity strip](gallery/images/FaceOcclusionPrevention_strip.png)
+![FaceOcclusionPrevention.scalar severity strip](images/FaceOcclusionPrevention_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

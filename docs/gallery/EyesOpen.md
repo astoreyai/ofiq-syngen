@@ -1,6 +1,6 @@
 # EyesOpen.scalar
 
-![EyesOpen.scalar severity strip](gallery/images/EyesOpen_strip.png)
+![EyesOpen.scalar severity strip](images/EyesOpen_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

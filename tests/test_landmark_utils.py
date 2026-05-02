@@ -68,16 +68,16 @@ def synthetic_landmarks():
 
 class TestIndexMaps:
     def test_left_eye_indices(self):
-        assert LEFT_EYE == list(range(60, 68))
+        assert list(range(60, 68)) == LEFT_EYE
 
     def test_right_eye_indices(self):
-        assert RIGHT_EYE == list(range(68, 76))
+        assert list(range(68, 76)) == RIGHT_EYE
 
     def test_mouth_outer_indices(self):
-        assert MOUTH_OUTER == list(range(76, 88))
+        assert list(range(76, 88)) == MOUTH_OUTER
 
     def test_mouth_inner_indices(self):
-        assert MOUTH_INNER == list(range(88, 96))
+        assert list(range(88, 96)) == MOUTH_INNER
 
     def test_contour_length(self):
         assert len(CONTOUR) == 33

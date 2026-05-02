@@ -26,12 +26,30 @@ The manifest is **empty by default**. To populate it:
 
 ## Regenerate
 
+The script and the test both invoke the OFIQ 1.1.0 SampleApp directly.
+The OFIQ shared libraries live next to the binary, so set
+`LD_LIBRARY_PATH` accordingly. **Also set `OFIQ_MODEL_DIR`** so the
+syngen pipeline can build a FaceContext — several operators (e.g.,
+`DynamicRange`, `UnderExposurePrevention`) use `ctx.face_mask` for
+masked / autoscaled effects, and the OFIQ scores will differ from
+the no-ctx defaults if you skip this.
+
 ```bash
+OFIQ_BIN=OFIQ-Project/install_x86_64_linux/Release/bin
+LD_LIBRARY_PATH=$OFIQ_BIN \
+OFIQ_MODEL_DIR=OFIQ-Project/data/models \
 python scripts/regenerate_parity_vectors.py \
-    --ofiq-binary /path/to/OFIQSampleApp \
+    --ofiq-binary $OFIQ_BIN/OFIQSampleApp \
     --image-dir tests/fixtures/ofiq_parity/images \
-    --severities 0.0,0.25,0.5,0.75,1.0 \
+    --severities 0.0,0.5,1.0 \
     --output tests/fixtures/ofiq_parity/manifest.json
+```
+
+To regenerate only a subset (e.g., after changing a single operator)
+pass `--components`:
+
+```bash
+... --components LuminanceMean.scalar,DynamicRange.scalar
 ```
 
 For each (image, component, severity) triple the script:
@@ -41,9 +59,17 @@ For each (image, component, severity) triple the script:
 
 ## Verify
 
+The test reads `OFIQ_BINARY` from the environment and skips entirely if
+unset:
+
 ```bash
+OFIQ_BINARY=OFIQ-Project/install_x86_64_linux/Release/bin/OFIQSampleApp \
+LD_LIBRARY_PATH=OFIQ-Project/install_x86_64_linux/Release/bin \
 pytest tests/test_ofiq_parity.py -v
 ```
+
+In CI the test is opt-in: builds without OFIQ pre-installed see all
+parity vectors as `SKIPPED`.
 
 ## Tolerance
 

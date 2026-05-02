@@ -1,6 +1,6 @@
 # Sharpness.scalar
 
-![Sharpness.scalar severity strip](gallery/images/Sharpness_strip.png)
+![Sharpness.scalar severity strip](images/Sharpness_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

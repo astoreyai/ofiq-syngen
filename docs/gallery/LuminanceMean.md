@@ -1,6 +1,6 @@
 # LuminanceMean.scalar
 
-![LuminanceMean.scalar severity strip](gallery/images/LuminanceMean_strip.png)
+![LuminanceMean.scalar severity strip](images/LuminanceMean_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

@@ -1,6 +1,6 @@
 # EyesVisible.scalar
 
-![EyesVisible.scalar severity strip](gallery/images/EyesVisible_strip.png)
+![EyesVisible.scalar severity strip](images/EyesVisible_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

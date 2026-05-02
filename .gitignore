@@ -46,3 +46,28 @@ notebooks/celeba_component_perturbation.pdf
 notebooks/component_perturbation_grid.png
 notebooks/crop_margin_v040_fix.png
 notebooks/celeba_component_perturbation_files/
+
+# === FLAME / DECA license-restricted assets — NEVER COMMIT ===
+# FLAME 2020 is non-commercial, non-redistributable per
+# https://flame.is.tue.mpg.de/modellicense.html
+# Each user must register individually.
+src/third_party/DECA/data/generic_model.pkl
+src/third_party/DECA/data/male_model.pkl
+src/third_party/DECA/data/female_model.pkl
+src/third_party/DECA/data/deca_model.tar
+src/third_party/DECA/data/FLAME2020*
+src/third_party/DECA/data/FLAME_albedo*
+# Belt-and-suspenders: ignore the entire data dir for the third_party DECA repo
+src/third_party/DECA/data/
+
+# === BFM-2009 derivatives — NEVER COMMIT ===
+# Basel Face Model 2009 is academic-research-only per
+# https://faces.dmi.unibas.ch/bfm/main.php?nav=1-1-0&id=agreement
+# Users get derivatives via `ofiq-syngen install-assets` (downloads from
+# cleardusk/3DDFA_V2 GitHub on first use, with the implicit BFM license
+# acceptance documented in INSTALL.md).
+src/ofiq_syngen/data/3dmm/*.npz
+src/ofiq_syngen/data/3dmm/*.pkl
+
+# Notebook PDFs are regenerable artifacts
+notebooks/*.pdf

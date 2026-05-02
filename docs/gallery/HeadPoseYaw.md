@@ -1,6 +1,6 @@
 # HeadPoseYaw.scalar
 
-![HeadPoseYaw.scalar severity strip](gallery/images/HeadPoseYaw_strip.png)
+![HeadPoseYaw.scalar severity strip](images/HeadPoseYaw_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

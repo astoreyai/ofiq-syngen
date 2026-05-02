@@ -44,17 +44,82 @@ def insert_second_face(
     if severity < 0.05:
         return img
 
+    if ctx is not None:
+        import os
+        method = os.environ.get("OFIQ_SYNGEN_EXPRESSION_METHOD", "3dmm").lower()
+        if method in ("ip2p", "instructpix2pix", "instruct_pix2pix",
+                      "sd_inpaint", "sd", "diffusion"):
+            try:
+                from ofiq_syngen.expression_diffusion import (
+                    is_sd_available, render_second_face_sd,
+                )
+                if is_sd_available():
+                    return render_second_face_sd(img, ctx, severity, seed)
+            except Exception:
+                pass
+
     rng = np.random.RandomState(seed)
     h, w = img.shape[:2]
     out = img.copy()
 
-    # Generate a simple synthetic face-like patch (skin-colored ellipse)
-    target_area_frac = severity * 0.4  # inserted face area as fraction of image
-    face_size = max(8, int(min(h, w) * np.sqrt(target_area_frac)))
+    # Identify regions where the second face is allowed to land:
+    # NOT inside the primary face, NOT inside hair, ideally inside
+    # BiSeNet background. This guarantees the second face never
+    # overlaps the primary -- if no allowed region is large enough
+    # for the requested face size, the face is shrunk to fit.
+    if ctx is not None and ctx.parsing_map is not None:
+        bg_mask = cv2.resize(
+            (ctx.parsing_map == BISENET_BACKGROUND).astype(np.uint8),
+            (w, h), interpolation=cv2.INTER_NEAREST,
+        )
+        # Forbid: primary face hull + adjacent hair + dilated face
+        forbid = np.zeros((h, w), dtype=np.uint8)
+        if ctx.face_mask is not None:
+            forbid |= ctx.face_mask.astype(np.uint8)
+        from ofiq_syngen.landmark_utils import BISENET_HAIR
+        hair = cv2.resize(
+            (ctx.parsing_map == BISENET_HAIR).astype(np.uint8),
+            (w, h), interpolation=cv2.INTER_NEAREST,
+        )
+        forbid |= hair
+        # Dilate forbid zone by 8 px so the second face has breathing room
+        forbid = cv2.dilate(forbid, np.ones((9, 9), np.uint8))
+        allowed = bg_mask & ~forbid
+    else:
+        # Fallback: use image borders only
+        allowed = np.zeros((h, w), dtype=np.uint8)
+        border = max(10, min(h, w) // 6)
+        allowed[:border, :] = 1
+        allowed[-border:, :] = 1
+        allowed[:, :border] = 1
+        allowed[:, -border:] = 1
 
-    # Create a small face patch from a region of the source image
-    # (self-similar -- take a crop of the original face, flip it)
-    crop_size = min(face_size, min(h, w) - 2)
+    # Target face size: fraction of PRIMARY face area, not image area
+    if ctx is not None and ctx.face_mask is not None:
+        primary_area = max(int(ctx.face_mask.sum()), 100)
+    else:
+        primary_area = (h * w) // 4
+    target_area = primary_area * severity * 0.5
+    face_size = max(12, int(np.sqrt(target_area)))
+
+    # Find the largest face_size that ACTUALLY fits in the allowed region.
+    # Erode by face_size/2 (radius) -- if no valid pixels, shrink the
+    # face and try again, until we find a fit or give up.
+    placement_mask = None
+    for shrink in [1.0, 0.75, 0.55, 0.4, 0.25]:
+        candidate = max(12, int(face_size * shrink))
+        erode_kernel = np.ones((candidate, candidate), np.uint8)
+        em = cv2.erode(allowed, erode_kernel)
+        if em.any():
+            placement_mask = em
+            face_size = candidate
+            break
+    if placement_mask is None:
+        # No room anywhere; skip the perturbation rather than overlap
+        return img
+
+    # Crop and flip the primary face for the patch
+    crop_size = min(face_size * 2, min(h, w) - 2)
     cx, cy = w // 2, h // 2
     crop = img[
         max(0, cy - crop_size // 2):cy + crop_size // 2,
@@ -62,39 +127,12 @@ def insert_second_face(
     ]
     if crop.shape[0] < 4 or crop.shape[1] < 4:
         return img
-
-    # Flip horizontally to make it look different
     face_patch = cv2.flip(crop, 1)
     face_patch = cv2.resize(face_patch, (face_size, face_size))
 
-    # Find placement location -- prefer background region
-    if ctx is not None and ctx.parsing_map is not None:
-        bg_mask = (ctx.parsing_map == BISENET_BACKGROUND).astype(np.uint8)
-        bg_mask_full = cv2.resize(bg_mask, (w, h), interpolation=cv2.INTER_NEAREST)
-    else:
-        # Fallback: use image borders
-        bg_mask_full = np.zeros((h, w), dtype=np.uint8)
-        border = max(10, min(h, w) // 6)
-        bg_mask_full[:border, :] = 1
-        bg_mask_full[-border:, :] = 1
-        bg_mask_full[:, :border] = 1
-        bg_mask_full[:, -border:] = 1
-
-    # Find valid placement coordinates
-    # Erode mask to ensure the patch fits
-    erode_size = face_size // 2
-    if erode_size > 1:
-        erode_kernel = np.ones((erode_size, erode_size), np.uint8)
-        placement_mask = cv2.erode(bg_mask_full, erode_kernel)
-    else:
-        placement_mask = bg_mask_full
-
+    # Pick a placement: prefer the highest valid pixel (farther from
+    # the primary face) for visual balance.
     valid = np.argwhere(placement_mask > 0)
-    if len(valid) == 0:
-        # No background space -- place in a corner
-        valid = np.array([[5, 5], [5, w - face_size - 5],
-                          [h - face_size - 5, 5], [h - face_size - 5, w - face_size - 5]])
-
     idx = rng.randint(0, len(valid))
     py, px = valid[idx]
 

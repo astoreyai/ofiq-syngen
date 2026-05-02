@@ -14,14 +14,57 @@
 
 ## Installation
 
+The package ships in tiers. Pick the one that matches the operators you need.
+
 ```bash
+# Tier 1 — core 28 OFIQ operators (always works, no GPU)
 pip install ofiq-syngen
+
+# Tier 2 — add pandas for batch dataset generation
+pip install ofiq-syngen[pandas]
+
+# Tier 3 — add Stable Diffusion / InstructPix2Pix paths for photorealistic
+# expression + occluder degradations (downloads SD checkpoint on first use)
+pip install ofiq-syngen[diffusion]
+
+# Tier 4 — add 3D head pose pipeline (DECA + FLAME + pyrender)
+# After install, run: ofiq-syngen install-assets
+pip install ofiq-syngen[three_d]
+
+# Everything (research / publication runs)
+pip install ofiq-syngen[all]
 ```
 
-With pandas support (required for `generate_dataset` and influence matrix):
+Tier 4 needs the **FLAME 2020** morphable face model, which is license-gated
+and cannot be redistributed. After `pip install ofiq-syngen[three_d]`:
+
+1. Register at <https://flame.is.tue.mpg.de/> (academic; ~24h approval).
+2. Download `FLAME2020.zip`, unzip, copy `generic_model.pkl` into the path
+   shown by `ofiq-syngen check-assets`.
+3. Run `ofiq-syngen install-assets` to download the public DECA pretrained
+   weights and the BFM-2009 derivatives.
+
+See [`INSTALL.md`](INSTALL.md) for the full per-tier walkthrough and
+[`LICENSE_NOTICES.md`](LICENSE_NOTICES.md) for third-party attributions
+(FLAME, DECA, BFM-2009, CelebA, VGGFace2, FFHQ, Stable Diffusion, OFIQ).
+
+### Air-gapped / offline environments
+
+Set `OFIQ_SYNGEN_OFFLINE=1` to disable every network fetch. Any operator
+that would download an asset raises `RuntimeError` with a clear message
+naming the asset to pre-stage.
+
+### GPU vs CPU
 
 ```bash
-pip install ofiq-syngen[pandas]
+# Auto-detect (default): use CUDA if torch reports it available, else CPU
+ofiq-syngen --device auto degrade ...
+
+# Force CPU
+ofiq-syngen --device cpu degrade ...
+
+# Force CUDA (requires onnxruntime-gpu, install with [gpu] extra)
+ofiq-syngen --device cuda degrade ...
 ```
 
 ## Quick Start

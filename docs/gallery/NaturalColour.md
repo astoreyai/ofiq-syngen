@@ -1,6 +1,6 @@
 # NaturalColour.scalar
 
-![NaturalColour.scalar severity strip](gallery/images/NaturalColour_strip.png)
+![NaturalColour.scalar severity strip](images/NaturalColour_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

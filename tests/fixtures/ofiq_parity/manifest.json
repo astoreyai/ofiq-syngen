@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-01T01:07:50.898065Z",
+  "generated_at": "2026-05-02T19:48:27.410363Z",
   "generator_script": "scripts/regenerate_parity_vectors.py",
   "image_set": [
     {
@@ -20,53 +20,245 @@
   ],
   "ofiq_version": "1.1.0",
   "schema_version": "1",
-  "syngen_version": "0.4.0",
+  "syngen_version": "0.5.0",
   "tolerance": 5.0,
   "tolerance_units": "raw OFIQ score (0-100)",
   "vectors": [
     {
-      "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
-      "expected_score": 100.0,
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 79.0,
       "image_id": "celeba_000001",
       "seed": 42,
       "severity": 0.0
     },
     {
-      "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
-      "expected_score": 100.0,
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 59.0,
       "image_id": "celeba_000001",
       "seed": 42,
       "severity": 0.5
     },
     {
-      "component": "LeftwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
-      "expected_score": 79.0,
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 42.0,
       "image_id": "celeba_000001",
       "seed": 42,
       "severity": 1.0
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 97.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 96.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 95.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 22.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 23.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 23.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
       "expected_score": 100.0,
       "image_id": "celeba_000001",
       "seed": 42,
       "severity": 0.0
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
+      "expected_score": 60.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
+      "expected_score": 38.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": 97.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": -1.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": -1.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 94.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
       "expected_score": 100.0,
       "image_id": "celeba_000001",
       "seed": 42,
       "severity": 0.5
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 90.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 79.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 80.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 74.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 69.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 33.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 10.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "LeftwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
+      "expected_score": 81.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
+      "expected_score": 94.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
       "expected_score": 72.0,
       "image_id": "celeba_000001",
       "seed": 42,
@@ -121,6 +313,390 @@
       "severity": 1.0
     },
     {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 75.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 16.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 87.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 79.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 34.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 72.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 6.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 93.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 91.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 88.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 88.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 87.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 86.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 55.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 68.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 70.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
+      "expected_score": 53.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
+      "expected_score": 53.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": 92.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": 49.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": -1.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 98.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 87.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 59.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 58.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 57.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 62.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 29.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 10.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
       "component": "LeftwardCropOfTheFaceImage.scalar",
       "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
       "expected_score": 100.0,
@@ -145,25 +721,25 @@
       "severity": 1.0
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
-      "expected_score": 100.0,
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
+      "expected_score": 68.0,
       "image_id": "celeba_000010",
       "seed": 42,
       "severity": 0.0
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
-      "expected_score": 100.0,
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
+      "expected_score": 7.0,
       "image_id": "celeba_000010",
       "seed": 42,
       "severity": 0.5
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
-      "expected_score": 49.0,
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
+      "expected_score": 3.0,
       "image_id": "celeba_000010",
       "seed": 42,
       "severity": 1.0
@@ -217,6 +793,390 @@
       "severity": 1.0
     },
     {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 86.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 85.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 48.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 74.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 77.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 18.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 70.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 68.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "BackgroundUniformity.scalar",
+      "degradation_type": "Segmented background noise [\u00a77.3.2]",
+      "expected_score": 65.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 90.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 84.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "DynamicRange.scalar",
+      "degradation_type": "Dynamic range compression [\u00a77.3.7]",
+      "expected_score": 81.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 33.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 32.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "ExpressionNeutrality.scalar",
+      "degradation_type": "Landmark-warped expression [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 32.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
+      "expected_score": 41.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "EyesVisible.scalar",
+      "degradation_type": "EVZ-targeted eye occlusion [\u00a77.4.5]",
+      "expected_score": 40.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": 49.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "FaceOcclusionPrevention.scalar",
+      "degradation_type": "Face-masked rectangular occlusion [\u00a77.4.7]",
+      "expected_score": -1.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 86.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadPoseRoll.scalar",
+      "degradation_type": "In-plane rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 63.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 74.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 73.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "IlluminationUniformity.scalar",
+      "degradation_type": "ROI illumination asymmetry [\u00a77.3.3]",
+      "expected_score": 67.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 97.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 74.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "InterEyeDistance.scalar",
+      "degradation_type": "Pad-and-shrink to reduce IED [\u00a77.4.8]",
+      "expected_score": 20.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
       "component": "LeftwardCropOfTheFaceImage.scalar",
       "degradation_type": "Leftward image shift (face toward left edge) [\u00a77.4.10.1]",
       "expected_score": 100.0,
@@ -241,25 +1201,25 @@
       "severity": 1.0
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
-      "expected_score": 100.0,
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
+      "expected_score": 97.0,
       "image_id": "celeba_000100",
       "seed": 42,
       "severity": 0.0
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
-      "expected_score": 100.0,
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
+      "expected_score": 59.0,
       "image_id": "celeba_000100",
       "seed": 42,
       "severity": 0.5
     },
     {
-      "component": "RightwardCropOfTheFaceImage.scalar",
-      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
-      "expected_score": 46.0,
+      "component": "LuminanceMean.scalar",
+      "degradation_type": "Face-masked darkening [\u00a77.3.4]",
+      "expected_score": 28.0,
       "image_id": "celeba_000100",
       "seed": 42,
       "severity": 1.0
@@ -308,6 +1268,702 @@
       "component": "MarginBelowOfTheFaceImage.scalar",
       "degradation_type": "Downward image shift (face toward bottom) [\u00a77.4.10.4]",
       "expected_score": 4.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MouthOcclusionPrevention.scalar",
+      "degradation_type": "Polygon-targeted mouth occlusion [\u00a77.4.6]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "NaturalColour.scalar",
+      "degradation_type": "CIELAB color shift in ROI zones [\u00a77.3.10]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 9.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "NoHeadCoverings.scalar",
+      "degradation_type": "Synthetic hat overlay [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 9.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "OverExposurePrevention.scalar",
+      "degradation_type": "Face-masked over-exposure [\u00a77.3.6]",
+      "expected_score": 98.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "RightwardCropOfTheFaceImage.scalar",
+      "degradation_type": "Rightward image shift (face toward right edge) [\u00a77.4.10.2]",
+      "expected_score": 46.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 25.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "Sharpness.scalar",
+      "degradation_type": "Gaussian blur [\u00a77.3.8]",
+      "expected_score": 0.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 67.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "SingleFacePresent.scalar",
+      "degradation_type": "Face insertion via Poisson blending [\u00a77.4.2]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "UnderExposurePrevention.scalar",
+      "degradation_type": "Face+occlusion masked under-exposure [\u00a77.3.5]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 68.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 47.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 45.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 98.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 90.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 90.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 48.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 28.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "LuminanceVariance.scalar",
+      "degradation_type": "Face-masked variance compression [\u00a77.3.4]",
+      "expected_score": 28.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 82.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 83.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 84.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 86.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 84.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 85.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 83.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 80.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 85.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 97.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 2.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 44.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 44.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000001",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 97.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 96.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 96.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 91.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 88.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 2.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 53.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 28.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000010",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 86.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 85.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadPoseYaw.scalar",
+      "degradation_type": "Perspective yaw rotation [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 84.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadPosePitch.scalar",
+      "degradation_type": "Perspective pitch tilt [\u00a77.4.11 yaw/pitch/roll]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 96.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 96.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "MouthClosed.scalar",
+      "degradation_type": "Landmark-warped mouth opening [\u00a77.4.4]",
+      "expected_score": 96.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "EyesOpen.scalar",
+      "degradation_type": "Landmark-warped eye closure [\u00a77.4.3]",
+      "expected_score": 99.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 2.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 27.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "HeadSize.scalar",
+      "degradation_type": "Pad-and-shrink to reduce head size [\u00a77.4.9]",
+      "expected_score": 39.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 1.0
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.0
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
+      "image_id": "celeba_000100",
+      "seed": 42,
+      "severity": 0.5
+    },
+    {
+      "component": "CompressionArtifacts.scalar",
+      "degradation_type": "JPEG compression [\u00a77.3.9]",
+      "expected_score": 100.0,
       "image_id": "celeba_000100",
       "seed": 42,
       "severity": 1.0

@@ -596,7 +596,7 @@ class GPUOFIQScorer:
         image_dir: str | Path,
         max_images: int = 0,
         progress_every: int = 500,
-    ) -> "pd.DataFrame":
+    ) -> pd.DataFrame:
         """Score all images in a directory.
 
         Returns DataFrame with Filename + 27 scalar columns.

@@ -1,6 +1,6 @@
 # MouthOcclusionPrevention.scalar
 
-![MouthOcclusionPrevention.scalar severity strip](gallery/images/MouthOcclusionPrevention_strip.png)
+![MouthOcclusionPrevention.scalar severity strip](images/MouthOcclusionPrevention_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

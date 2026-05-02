@@ -1,6 +1,6 @@
 # SingleFacePresent.scalar
 
-![SingleFacePresent.scalar severity strip](gallery/images/SingleFacePresent_strip.png)
+![SingleFacePresent.scalar severity strip](images/SingleFacePresent_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

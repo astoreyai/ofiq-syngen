@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ofiq-syngen"
-version = "0.4.1"
+version = "0.5.1"
 description = "ISO/IEC 29794-5 component-aligned synthetic face image quality degradation pipeline"
 readme = "README.md"
 license = "MIT"
@@ -43,16 +43,50 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# GPU-accelerated OFIQ ONNX models
 gpu = ["onnxruntime-gpu>=1.14"]
+# DataFrame outputs for batch operations
 pandas = ["pandas>=1.3"]
-generative = [
-    "insightface>=0.7",
-    "diffusers>=0.25",
+# Stable Diffusion + InstructPix2Pix paths (photorealistic occluders,
+# expressions, side lighting). Activate at runtime with
+# OFIQ_SYNGEN_EXPRESSION_METHOD=ip2p (or sd_inpaint).
+diffusion = [
     "torch>=2.0",
+    "diffusers>=0.27",
+    "transformers>=4.38",
+    "accelerate>=0.28",
+    "Pillow>=9.0",
 ]
+# 3DMM / FLAME head pose pipeline (DECA + pyrender). Requires the
+# FLAME 2020 + DECA model files; install them with
+#   ofiq-syngen install-assets --flame-username <u> --flame-password <p>
+three_d = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "chumpy",
+    "face-alignment",
+    "yacs",
+    "kornia",
+    "fvcore",
+    "scikit-image",
+    "pyrender",
+    "trimesh",
+    "PyOpenGL",
+    "gdown",
+]
+# nvdiffrast (alternative differentiable rasterizer; needs CUDA toolkit)
+nvdiff = ["nvdiffrast"]
+# Image insertion library
+insightface = ["insightface>=0.7"]
+# Everything (research / publication runs)
+all = ["ofiq-syngen[gpu,pandas,diffusion,three_d,insightface]"]
+# Backwards-compatible alias of pre-0.5 "generative" extra
+generative = ["ofiq-syngen[diffusion,insightface]"]
 dev = [
     "pytest>=7.0",
+    "pytest-cov>=4.0",
     "pandas>=1.3",
+    "ruff>=0.4",
 ]
 
 [project.urls]
@@ -66,6 +100,36 @@ ofiq-syngen = "ofiq_syngen.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ofiq_syngen"]
+# License-gated assets that MUST NEVER be redistributed:
+#   - FLAME 2020 (Max Planck non-commercial license)
+#   - DECA pretrained weights (academic only)
+#   - BFM-2009 derivatives (Basel academic license, no redistribution)
+# All require the user to obtain their own copy via
+# `ofiq-syngen install-assets` (DECA, BFM) or manual registration (FLAME).
+exclude = [
+    "ofiq_syngen/data/3dmm/*.npz",
+    "ofiq_syngen/data/3dmm/*.pkl",
+]
+
+[tool.hatch.build.targets.sdist]
+# Source distribution must exclude license-gated assets AND non-essential
+# DECA repo artifacts that bloat the tarball without contributing to runtime.
+exclude = [
+    # License-gated weights / derivatives (NEVER redistribute):
+    "src/ofiq_syngen/data/3dmm/*.npz",
+    "src/ofiq_syngen/data/3dmm/*.pkl",
+    "src/third_party/DECA/data/*.pkl",
+    "src/third_party/DECA/data/*.tar",
+    "src/third_party/DECA/data/FLAME2020*",
+    "src/third_party/DECA/data/FLAME_albedo*",
+    # Non-essential DECA artifacts (sample images, tensorboard logs, demo
+    # notebook). The DECA Python source under decalib/ + demos/ + configs/
+    # stays so the package is functional from a fresh sdist install.
+    "src/third_party/DECA/Doc/",
+    "src/third_party/DECA/TestSamples/",
+    "src/third_party/DECA/logs/",
+    "src/third_party/DECA/Detailed_Expression_Capture_and_Animation.ipynb",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -73,17 +137,61 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 120
 target-version = "py39"
+# Exclude vendored third-party code (DECA, etc.) from lint
+extend-exclude = [
+    "src/third_party",
+]
 
 [tool.ruff.lint]
+# Selected rule set: pycodestyle errors (E), pyflakes (F), warnings (W),
+# bugbear (B), pyupgrade (UP), simplify (SIM). Bugbear catches common
+# Python footguns; pyupgrade flags syntax that has a modern equivalent.
+select = ["E", "F", "W", "B", "UP", "SIM"]
 # E702: compound statements on one line (intentional in pose-math one-liners)
 # E741: ambiguous variable name (l/r/t/b is universally read as left/right/top/bottom)
-ignore = ["E702", "E741"]
+# B008: function calls in argument defaults (cv2/numpy ctors are inert)
+# B904: raise from chain (verbose for pure passthrough re-raises)
+# SIM108: ternary collapse (often hurts readability for math)
+# SIM117: combine nested with (clarity > brevity for resource setup)
+# UP007: X | Y union (we still target py3.9, must keep typing.Union/Optional)
+# UP035: typing import deprecated (same py3.9 reason)
+# UP045: typing.Optional -> X | None (same py3.9 reason)
+ignore = ["E702", "E741", "B008", "B904", "SIM108", "SIM117", "UP007", "UP035", "UP045"]
 
 [tool.ruff.lint.per-file-ignores]
 # pandas typed as a forward-string annotation in score_directory; pandas
-# is an optional runtime dependency, not an import-time requirement
-"src/ofiq_syngen/gpu_ofiq_scorer.py" = ["F821"]
+# is an optional runtime dependency, not an import-time requirement.
+# Long lines are ONNX model paths inside multi-line ctor calls.
+"src/ofiq_syngen/gpu_ofiq_scorer.py" = ["F821", "E501"]
 # Generative imports placed mid-module so the registration block (which
 # wraps them in _register calls) groups together by OFIQ section rather
-# than collecting all imports at the top
+# than collecting all imports at the top. Long lines are argparse help
+# strings — wrapping splits sentences mid-flow.
+"src/ofiq_syngen/cli.py" = ["E501"]
 "src/ofiq_syngen/components.py" = ["E402"]
+# Test fixtures often shadow builtins / use bare excepts intentionally
+"tests/*.py" = ["B007", "B017"]
+# Examples are demo code — readability beats strict simplification rules
+"examples/*.py" = ["SIM"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+no_implicit_optional = true
+strict_equality = true
+# Permissive on untyped imports — opencv, onnxruntime, scipy, diffusers,
+# torch all ship without (or with partial) type stubs. Tightening this
+# adds 100s of errors with no real safety win.
+ignore_missing_imports = true
+# Permissive on missing return type annotations in tests and CLI dispatch.
+# The package itself should be annotated; tooling code does not need to be.
+disallow_untyped_defs = false
+check_untyped_defs = true
+exclude = [
+    "src/third_party/",
+    "build/",
+    "dist/",
+    "site/",
+]

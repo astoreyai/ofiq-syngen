@@ -1,6 +1,6 @@
 # HeadSize.scalar
 
-![HeadSize.scalar severity strip](gallery/images/HeadSize_strip.png)
+![HeadSize.scalar severity strip](images/HeadSize_strip.png)
 
 Severity: 0.00, 0.25, 0.50, 0.75, 1.00 left to right.
 

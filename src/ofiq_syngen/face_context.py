@@ -58,6 +58,7 @@ class FaceContext:
     parsing_map: np.ndarray                   # (400, 400) uint8, BiSeNet classes 0-18
     occlusion_mask: np.ndarray                # image-sized uint8, 1=visible 0=occluded
     head_pose: tuple[float, float, float]     # (yaw, pitch, roll) degrees
+    raw_3ddfa_params: np.ndarray              # (62,) full 3DDFA-V2 output (denormalized)
 
     # Derived metrics (computed in __post_init__)
     left_eye_center: tuple[float, float] = field(init=False)
@@ -132,7 +133,7 @@ class FaceContext:
         landmarks = _run_adnet(image, models, is_aligned)
         parsing = _run_bisenet(image, models, is_aligned)
         occlusion = _run_occlusion_seg(image, models, is_aligned)
-        pose = _run_headpose(image, models, is_aligned)
+        pose, raw_params = _run_headpose(image, models, is_aligned)
 
         return cls(
             image=image,
@@ -141,6 +142,7 @@ class FaceContext:
             parsing_map=parsing,
             occlusion_mask=occlusion,
             head_pose=pose,
+            raw_3ddfa_params=raw_params,
         )
 
 
@@ -326,22 +328,17 @@ def _run_occlusion_seg(
 
 def _run_headpose(
     image: np.ndarray, models: OFIQModels, is_aligned: bool,
-) -> tuple[float, float, float]:
-    """Run HeadPose3DDFAV2 to get Euler angles.
+) -> tuple[tuple[float, float, float], np.ndarray]:
+    """Run HeadPose3DDFAV2 to get Euler angles AND full 62-dim params.
 
-    Preprocessing (from HeadPose3DDFAV2.cpp lines 96-220):
-    - Crop around face bounding box center: top=center_y - 0.44*h,
-      bottom=center_y + 0.51*h, square
-    - Resize to 120x120
-    - Normalize: (pixel - 127.5) / 128.0
-    - HWC -> CHW
-    - Run model -> 7 params
-    - Denormalize: param * paramStd + paramMean
-    - Build rotation matrix from r0, r1, r2=cross(r0,r1)
-    - Extract Euler angles (yaw, pitch, roll)
+    The model outputs 62 parameters: 12 pose (R + translation) + 40 shape
+    + 10 expression. OFIQ uses only the first 7 for Euler angles. We
+    return both: the (yaw, pitch, roll) tuple AND the full 62-dim
+    denormalized vector for downstream 3DMM-based perturbations
+    (ExpressionNeutrality).
 
     Returns:
-        (yaw, pitch, roll) in degrees.
+        ((yaw, pitch, roll) in degrees, raw_params_62d as np.ndarray).
     """
     session = models.headpose
 
@@ -367,10 +364,23 @@ def _run_headpose(
     input_name = session.get_inputs()[0].name
     outputs = session.run(None, {input_name: batch})
 
-    raw_params = outputs[0].flatten()[:7]
+    raw_full = outputs[0].flatten()  # (62,)
 
-    # Denormalize
-    params = raw_params * _PARAM_STD + _PARAM_MEAN
+    # Denormalize all 62 params using the bundled 62-dim mean/std table.
+    # Falls back to the OFIQ-style 7-dim subset if the full table isn't
+    # available (e.g. tests that don't ship the data file).
+    try:
+        from ofiq_syngen.face_3dmm import load_param_mean_std
+        mean62, std62 = load_param_mean_std()
+        raw_full_denorm = raw_full * std62 + mean62
+    except FileNotFoundError:
+        # Fall back to the OFIQ subset; raw_3ddfa_params will only be
+        # partially valid but Euler angles still work correctly.
+        raw_full_denorm = raw_full.copy()
+        raw_full_denorm[:7] = raw_full[:7] * _PARAM_STD + _PARAM_MEAN
+
+    # OFIQ uses just the first 7 (after denormalization) for Euler angles.
+    params = raw_full_denorm[:7]
 
     # Build rotation matrix
     r0 = params[0:3].copy()
@@ -405,4 +415,4 @@ def _run_headpose(
     pitch = phi_pitch * 180.0 / math.pi
     roll = phi_roll * 180.0 / math.pi
 
-    return (yaw, pitch, roll)
+    return (yaw, pitch, roll), raw_full_denorm

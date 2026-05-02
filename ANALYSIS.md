@@ -50,17 +50,17 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | Variance of face-region luminance histogram: Σ(histogram[i] × (i/255 − mean)²). Score = round(100 × sin((60v)/(60v+1) × π)). Sine mapping means ideal variance ≈ 0.03. | Per-channel pixel compression toward face-region channel mean: `mean + (pixel − mean) × factor`. Factor 1.0 → 0.1. Applied within face mask. |
-| **Analyses / Perturbs** | **Face landmark mask**: same mask as LuminanceMean. Luminance histogram variance within that mask. | **Face mask**: Same `ctx.face_mask`. Compresses toward per-channel mean computed only from face pixels. |
-| **Alignment** | **GOOD**. Same face mask. Compressing RGB channels toward their means reduces luminance variance. Minor mismatch: OFIQ computes variance on rec.709 luminance, syngen compresses per-channel in RGB. The effect is directionally correct — pulling RGB channels toward their means necessarily compresses the resulting luminance distribution. |
+| **Algorithm** | Variance of face-region luminance histogram: Σ(histogram[i] × (i/255 − mean)²). Scalar = `round(100 × sin((60v)/(60v+1) × π))` — **U-shaped** with peak at variance ≈ 1/60 (0.0167); both higher AND lower variance score lower. | v0.5: **bidirectional** per-channel anti-mean perturbation. If face Y variance > 0.0167 (typical natural face has var ~0.05-0.10), expand by `mean + (pixel − mean) × (1 + s × 4)`. If below optimum, compress with `(1 − s × 0.98)`. Direction chosen per image from probed face_mask Y variance. |
+| **Analyses / Perturbs** | **Face landmark mask**: same mask as LuminanceMean. Luminance histogram variance within that mask. | **Face mask** (hull minus hair, feathered alpha blend): variance probed and perturbation applied within `_hull_minus_hair_mask(ctx)`. |
+| **Alignment** | **GOOD**. Pre-v0.5 the operator was compress-only, which on the typical natural face (variance > optimum) IMPROVED the OFIQ scalar instead of degrading it. v0.5 chooses direction per image so the OFIQ scalar always moves AWAY from peak: parity vectors confirm 68→45 / 98→90 / 48→28 across the 3 CelebA test images. Pure additive Gaussian noise was tried first and rejected because uint8 clipping at 0/255 cancels most of the variance gain on bright/dark images; anti-mean scaling tolerates clipping because saturated extremes are themselves high-variance. |
 
 ### §7.3.5 UnderExposurePrevention
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | Proportion of pixels with luminance in [0, 25] within combined face mask (faceMask AND occlusionMask). Sigmoid: h=120, x0=0.92, w=0.05. | Multiplicative darkening (factor 1.0 → 0.15) within combined face + occlusion mask. |
-| **Analyses / Perturbs** | **Face mask AND occlusion mask**: bitwise_and of landmark convex hull mask and binary occlusion segmentation mask. Counts dark pixels (lum 0–25) within this combined mask. | **Face mask AND occlusion mask**: Same `cv2.bitwise_and(ctx.face_mask, ctx.occlusion_mask)`. Darkening pushes pixels into the [0,25] range that OFIQ penalizes. |
-| **Alignment** | **EXCELLENT**. Same combined mask. Darkening directly increases the proportion of dark pixels OFIQ counts. |
+| **Algorithm** | Proportion of pixels with luminance in [0, 25] within combined face mask (face_landmark_region AND occlusionMask). Sigmoid: h=120, x0=0.92, w=0.05. Scalar starts moving below 100 only once ~90% of mask pixels land in [0, 25]. | v0.5: per-image autoscaled whole-image gamma. Solves gamma so face Y mean lands at ~5/255, capped at 10. |
+| **Analyses / Perturbs** | **Face mask AND occlusion mask**: bitwise_and of landmark convex hull mask and binary occlusion segmentation mask. Counts dark pixels (lum 0–25) within this combined mask. | **Whole image** (gamma applies uniformly, but autoscale gamma is computed from face Y mean for natural underexposure appearance). |
+| **Alignment** | **MEASURED LIMIT**. Per-image autoscale fixes the v0.4 dataset-dependence (fixed gamma 1.0..3.5 only triggered the OFIQ scalar on already-dark sources). On dark/medium-bright faces the scalar drops cleanly (e.g., img2: 100→18 at sev=1.0). On already-bright source faces (face Y mean > ~140), OFIQ's face detector starts failing alignment around gamma=12-15, returning sentinel scalar=-1, BEFORE the scalar can drop below 100. Gamma is therefore capped at 10 — the operator produces visually-correct underexposure but the OFIQ scalar may stay at 100 on bright sources. This is a fundamental OFIQ measure limit (face detection threshold conflicts with the dark-pixel proportion threshold), not a syngen bug. |
 
 ### §7.3.6 OverExposurePrevention
 
@@ -90,9 +90,9 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | ONNX neural network (`ssim_248_model.onnx`) on center crop (248×248 from aligned face, excludes 184px border). Input normalized with ImageNet-style mean/std. Sigmoid: h=1, a=−0.0278, s=103, x0=0.3308, w=0.092. | JPEG re-encoding at quality 100 → 5. |
-| **Analyses / Perturbs** | **Center crop of aligned face**: 248×248 center region. Neural network trained to detect JPEG blocking/ringing artifacts. | **Whole image**: JPEG encode/decode at degraded quality produces exactly the blocking and ringing artifacts the neural network was trained to detect. |
-| **Alignment** | **EXCELLENT**. JPEG re-encoding produces the exact artifact type OFIQ's neural network was designed to detect. |
+| **Algorithm** | ONNX neural network (`ssim_248_model.onnx`) on center crop (248×248 from aligned face, excludes 184px border). Input normalized with ImageNet-style mean/std. Sigmoid: h=1, a=−0.0278, s=103, x0=0.3308, w=0.092. Raw output ∈ [0,1], scalar = sigmoid(raw). | v0.5: cascaded chroma quantize + JPEG. Severity controls chroma step (1..32), JPEG quality (95..3), and pass count (1..4). |
+| **Analyses / Perturbs** | **Center crop of aligned face**: 248×248 center region. Neural network trained to detect JPEG blocking/ringing artifacts. | **Whole image**: cascaded chroma destruction + JPEG re-encoding produces compounded blocking, ringing, and chroma-bleed artifacts. |
+| **Alignment** | **MEASURED LIMIT**. The CNN raw score moves correctly with severity (0.89 → 0.67 across sev 0..1) but the OFIQ scalar mapping (sigmoid x0=0.33, w=0.092) requires raw < 0.40 to drop below 100. Empirically the CNN's raw response on a clean CelebA face has a floor near 0.65 even under aggressive cascade compression — well above the sigmoid transition zone. **The OFIQ CompressionArtifacts scalar can stay at 100 even when our operator produces visibly degraded JPEG**, because the CNN was trained on a specific corruption distribution that does not include modern aggressive cascade encoding. The operator does its job (artifacts present, raw score moves); the OFIQ measure simply isn't sensitive enough to flag them on clean source images. Use the raw OFIQ score, not the scalar, when training quality predictors against this operator. |
 
 ### §7.3.10 NaturalColour
 

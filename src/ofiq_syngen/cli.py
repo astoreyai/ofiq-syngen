@@ -1,6 +1,8 @@
 """Command-line interface for ofiq-syngen.
 
 Usage:
+    ofiq-syngen check-assets
+    ofiq-syngen install-assets   # downloads public DECA; FLAME is manual
     ofiq-syngen degrade --component Sharpness.scalar --severity 0.6 --output degraded.jpg input.jpg
     ofiq-syngen sweep --component Sharpness.scalar --levels 10 --output-dir ./output input.jpg
     ofiq-syngen list-components
@@ -13,6 +15,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
+import os
 import sys
 from pathlib import Path
 
@@ -31,6 +35,57 @@ from ofiq_syngen.standards import (
     STANDARDS_REFS,
     get_refs,
 )
+
+
+log = logging.getLogger("ofiq_syngen")
+
+
+def _configure_logging(verbosity: int) -> None:
+    """Wire stdlib logging based on -v / -vv flags.
+
+    -q       -> WARNING
+    default  -> INFO
+    -v       -> DEBUG for ofiq_syngen, INFO for everything else
+    -vv      -> DEBUG everywhere
+    """
+    if verbosity < 0:
+        root_level = logging.WARNING
+        pkg_level = logging.WARNING
+    elif verbosity == 0:
+        root_level = logging.WARNING
+        pkg_level = logging.INFO
+    elif verbosity == 1:
+        root_level = logging.INFO
+        pkg_level = logging.DEBUG
+    else:
+        root_level = logging.DEBUG
+        pkg_level = logging.DEBUG
+    logging.basicConfig(
+        level=root_level,
+        format="%(asctime)s %(name)s %(levelname)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    log.setLevel(pkg_level)
+
+
+def _resolve_device(requested: str) -> str:
+    """Resolve --device {cpu,cuda,auto} to a concrete device.
+
+    auto: prefer CUDA if torch reports it available and onnxruntime-gpu
+    is importable; otherwise cpu.
+    """
+    if requested == "cpu":
+        return "cpu"
+    if requested == "cuda":
+        return "cuda"
+    # auto
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return "cuda"
+    except ImportError:
+        pass
+    return "cpu"
 
 
 PRESETS: dict[str, list[str]] = {
@@ -228,7 +283,11 @@ def cmd_show_standards(args: argparse.Namespace) -> int:
         except ValueError as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
-        rows = [(c, get_refs(c)) for c in sorted(allowed) if get_refs(c) is not None]
+        rows = [
+            (c, refs)
+            for c in sorted(allowed)
+            if (refs := get_refs(c)) is not None
+        ]
     else:
         rows = sorted(STANDARDS_REFS.items())
 
@@ -264,6 +323,51 @@ def cmd_show_standards(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_check_assets(args: argparse.Namespace) -> int:
+    """Print which optional assets are present and what they unlock."""
+    from ofiq_syngen.assets import print_checksums, status
+    if getattr(args, "print_checksums", False):
+        print("SHA-256 of present assets (paste into ASSETS in assets.py):",
+              file=sys.stderr)
+        print_checksums()
+        return 0
+    s = status()
+    print(f"{'Asset':<22} {'Present':<10} Path")
+    print("-" * 80)
+    for name, info in s.items():
+        marker = "yes" if info["present"] else "no"
+        print(f"{name:<22} {marker:<10} {info['path']}")
+    print()
+    print("Capabilities:")
+    print("  2D operators (always available):  identity, sharpness, JPEG, etc.")
+    has_3dmm = all(s[k]["present"] for k in ("bfm_dense", "bfm_sparse", "param_mean_std"))
+    has_3d = all(s[k]["present"] for k in ("deca_model", "flame_2020"))
+    print(f"  3DMM head pose (TPS):             {'yes' if has_3dmm else 'no'}")
+    print(f"  3D head pose (FLAME / DECA):      {'yes' if has_3d else 'no'}")
+    print()
+    print("To install missing 3D assets:")
+    print("  ofiq-syngen install-assets   # downloads public DECA pretrained")
+    print("  # FLAME 2020 must be installed manually (license-gated):")
+    print("  # see INSTALL.md  -> 'Tier 3 -> FLAME 2020 manual install steps'")
+    return 0
+
+
+def cmd_install_assets(args: argparse.Namespace) -> int:
+    """Download optional DECA pretrained weights and print FLAME
+    manual-install instructions.
+
+    FLAME 2020 is license-gated and non-redistributable; ofiq-syngen
+    does NOT automate its download. Users must register at
+    https://flame.is.tue.mpg.de/ and place generic_model.pkl manually.
+    """
+    from ofiq_syngen.assets import install_3d_assets
+    placed = install_3d_assets()
+    print()
+    for name, path in placed.items():
+        print(f"  installed {name}: {path}")
+    return 0
+
+
 def cmd_generate_dataset(args: argparse.Namespace) -> int:
     """Generate a full degradation dataset."""
     if args.components and args.preset:
@@ -294,6 +398,8 @@ def cmd_generate_dataset(args: argparse.Namespace) -> int:
     print(f"Generating dataset from {images_dir} -> {output_dir}")
     print(f"  Max images: {args.max_images}")
     if args.preset:
+        # The preset branch above always assigns a list, so components is non-None here.
+        assert components is not None
         print(f"  Preset: {args.preset} ({len(components)} components)")
     else:
         print(f"  Components: {len(components) if components else 'all'}")
@@ -319,6 +425,20 @@ def main(argv: list[str] | None = None) -> int:
         description="ISO/IEC 29794-5 component-aligned synthetic face image quality degradation pipeline",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "--device", choices=["cpu", "cuda", "auto"], default="auto",
+        help="Compute device for ONNX / torch backends (default: auto). "
+             "auto prefers CUDA when torch reports it available.",
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="count", default=0,
+        help="Increase log verbosity. -v = INFO+DEBUG for ofiq_syngen, "
+             "-vv = DEBUG everywhere.",
+    )
+    parser.add_argument(
+        "-q", "--quiet", action="store_true",
+        help="Suppress INFO logging (warnings only).",
+    )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # degrade
@@ -382,7 +502,41 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_gen.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
 
+    # check-assets
+    p_check = subparsers.add_parser(
+        "check-assets", help="Show which optional model assets are installed",
+    )
+    p_check.add_argument(
+        "--print-checksums",
+        action="store_true",
+        help="Compute SHA-256 of every present asset (for filling in pinned hashes before release).",
+    )
+
+    # install-assets
+    subparsers.add_parser(
+        "install-assets",
+        help=(
+            "Download DECA pretrained weights and print FLAME 2020 "
+            "manual-install instructions"
+        ),
+    )
+
     args = parser.parse_args(argv)
+
+    verbosity = -1 if args.quiet else args.verbose
+    _configure_logging(verbosity)
+
+    # Resolve --device into the env vars / runtime providers downstream
+    # ONNX and torch loaders read. We set both for compatibility:
+    #   ORT_PROVIDER     = onnxruntime provider hint (CUDAExecutionProvider / CPUExecutionProvider)
+    #   OFIQ_SYNGEN_DEVICE = generic hint, picked up by three_d/lift/* and other torch consumers
+    device = _resolve_device(args.device)
+    os.environ["OFIQ_SYNGEN_DEVICE"] = device
+    if device == "cuda":
+        os.environ.setdefault("ORT_PROVIDER", "CUDAExecutionProvider")
+    else:
+        os.environ.setdefault("ORT_PROVIDER", "CPUExecutionProvider")
+    log.debug("device=%s ORT_PROVIDER=%s", device, os.environ["ORT_PROVIDER"])
 
     if args.command is None:
         parser.print_help()
@@ -395,6 +549,8 @@ def main(argv: list[str] | None = None) -> int:
         "show-standards": cmd_show_standards,
         "generate-dataset": cmd_generate_dataset,
         "export-conformance": cmd_export_conformance,
+        "check-assets": cmd_check_assets,
+        "install-assets": cmd_install_assets,
     }
 
     return dispatch[args.command](args)

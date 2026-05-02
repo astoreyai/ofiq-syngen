@@ -74,6 +74,8 @@ def render_sunglasses(img: np.ndarray, ctx: FaceContext, severity: float,
                       seed: int) -> np.ndarray:
     """Render realistic sunglasses over the Eye Visibility Zones.
 
+    At severity=0.0 returns the input unchanged (identity).
+
     Pipeline:
       1. Build elliptical lens shapes matching EVZ aspect ratio
       2. Lens fill: dark RGB with subtle vertical gradient
@@ -83,7 +85,8 @@ def render_sunglasses(img: np.ndarray, ctx: FaceContext, severity: float,
       6. Drop shadow under glasses
       7. Composite with feathered alpha (severity controls opacity)
     """
-    rng = np.random.RandomState(seed)
+    if severity < 0.01:
+        return img
     h, w = img.shape[:2]
     out = img.copy().astype(np.float32)
     lens_mask = np.zeros((h, w), dtype=np.uint8)
@@ -171,6 +174,8 @@ def render_surgical_mask(img: np.ndarray, ctx: FaceContext, severity: float,
                          seed: int) -> np.ndarray:
     """Render realistic surgical mask conforming to face contour.
 
+    At severity=0.0 returns the input unchanged (identity).
+
     Pipeline:
       1. Determine mask region: top edge follows nose-bridge landmark,
          bottom edge follows chin contour, sides follow jaw landmarks
@@ -180,6 +185,8 @@ def render_surgical_mask(img: np.ndarray, ctx: FaceContext, severity: float,
       5. Severity controls coverage extent: low = mouth only;
          high = full nose-to-chin
     """
+    if severity < 0.01:
+        return img
     rng = np.random.RandomState(seed)
     h, w = img.shape[:2]
     landmarks = ctx.landmarks_98
@@ -199,7 +206,6 @@ def render_surgical_mask(img: np.ndarray, ctx: FaceContext, severity: float,
     bottom_y = int(chin[1] + eye_mouth_dist * 0.15)
 
     # Use jaw landmarks 0-32 for sides
-    jaw_y_at_top = top_y
     jaw_x_left = int(min(landmarks[0:8, 0].min(), mouth_left[0]) - 5)
     jaw_x_right = int(max(landmarks[25:33, 0].max(), mouth_right[0]) + 5)
 
@@ -271,6 +277,8 @@ def render_hand_occluder(img: np.ndarray, ctx: FaceContext, severity: float,
                          seed: int) -> np.ndarray:
     """Render skin-toned hand silhouette occluding part of the face.
 
+    At severity=0.0 returns the input unchanged (identity).
+
     Pipeline:
       1. Sample skin tone from face mask (so hand matches subject)
       2. Build hand silhouette via ellipses (palm + 4-finger blob)
@@ -278,6 +286,8 @@ def render_hand_occluder(img: np.ndarray, ctx: FaceContext, severity: float,
       4. Drop shadow on face under hand
       5. Composite with feathered edges
     """
+    if severity < 0.01:
+        return img
     rng = np.random.RandomState(seed)
     h, w = img.shape[:2]
 
@@ -350,6 +360,8 @@ def render_hat(img: np.ndarray, ctx: FaceContext, severity: float,
                seed: int) -> np.ndarray:
     """Render realistic hat (beanie / cap) on top of head.
 
+    At severity=0.0 returns the input unchanged (identity).
+
     Pipeline:
       1. Determine head-top region from face contour landmarks
       2. Build dome shape conforming to forehead curvature
@@ -359,6 +371,8 @@ def render_hat(img: np.ndarray, ctx: FaceContext, severity: float,
       6. Composite with feathered edges
       7. Severity controls vertical coverage extent
     """
+    if severity < 0.01:
+        return img
     rng = np.random.RandomState(seed)
     h, w = img.shape[:2]
     landmarks = ctx.landmarks_98
