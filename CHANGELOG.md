@@ -2,6 +2,67 @@
 
 All notable changes to the ofiq-syngen package.
 
+## [0.5.2] - 2026-05-02
+
+Patch release: visual quality pass driven by side-by-side review of the
+ICAO §3.2 perturbation gallery on VGGFace2 fixtures. Eleven operators
+got cosmetic / artifact fixes; OFIQ-binary parity behavior is preserved.
+
+### Operator visual fixes
+
+- **Crop / Margin (4 ops)**: replaced `cv2.inpaint(INPAINT_TELEA)` and
+  flat-color backdrop with `BORDER_REFLECT` mirror-extension blended
+  70/30 with sampled backdrop color. The v0.5.1a flat-fill produced a
+  visible brown rectangle at the empty edge; the new fill plausibly
+  continues the source background while keeping the OFIQ-friendly
+  uniform-bg sample dominant.
+- **InterEyeDistance**: shrink scale floor 0.30 → 0.45 (face stays
+  recognizable at sev=1.0). Padding now uses 50/50 blur(source) +
+  backdrop-color instead of flat fill or BORDER_REFLECT (which had
+  produced a kaleidoscope of mirrored mini-faces).
+- **OverExposurePrevention**: pre-clip input to [4, 245] before gamma
+  so JPEG noise in the saturated extremes doesn't get amplified into
+  rainbow chromatic stippling at sev=1.0 on video-screenshot sources.
+- **EyesOpen**: lash-line darkening 0.18 → 0.06, sigma eh/6 → eh/3.
+  Eliminates the v0.5.1a "bandaid pink stripe" across the eye region.
+- **Sharpness**: max blur sigma 10.5 → 6.5. v0.5.1a sigma=10.5
+  obliterated the face entirely at sev=1.0; the new cap preserves
+  identity for ML training while still triggering the OFIQ scalar.
+- **HeadPoseYaw / Pitch**: 2D perspective squeeze amplitude 0.40 → 0.50
+  for better visibility on the Tier 3 fallback path.
+- **RadialDistortion**: vignette darkening cap 0.55 → 0.40, floor
+  0.25 → 0.55. Corners stay visible (no longer crushed to black).
+- **ExpressionNeutrality**: surprise template mode-0 (jaw open) halved
+  4.0 → 8.0 to prevent the TPS warp from dragging source-teeth pixels
+  onto the chin. Composite mask dilation cap reduced 22 → 8 px and
+  soft-blend sigma t/35 → t/80 so the warped region stays inside the
+  actual lip contour. Fallback path gets explicit anatomical anchors
+  (chin, jaw, nose tip, eye corners, eyebrows) so the TPS warp
+  localizes to the mouth instead of bleeding into the face boundary.
+- **MouthOcclusionPrevention**: redesigned the procedural surgical
+  mask polygon as a rounded rectangle with cheek bulge + chin curve
+  + horizontal pleats. v0.5.1a produced a "paper airplane" wedge.
+- **NaturalColour**: CIELAB a*/b* shift cap 50 → 30 LAB units. Lands
+  just outside the natural plateau (a* ∈ [5,25], b* ∈ [5,35])
+  instead of overshooting into horror-filter cyan.
+- **CompressionArtifacts**: cascaded chroma quantize cap 32 → 8,
+  JPEG quality floor 3 → 8, pass count 4 → 2. Result is a
+  recognizable face under heavy-but-plausible "social-media re-upload"
+  compression instead of the v0.5.1a 1995-web-GIF pixelated mess.
+
+### Validation
+
+- 245 OFIQ-binary parity vectors still pass against OFIQ 1.1.0
+  (manifest regenerated for every operator changed in this release).
+- 329 unit tests pass, 36 skipped, 1 xfailed.
+- ruff strict + mypy on cli.py + assets.py: clean.
+- Wheel + sdist: license-clean (FLAME / DECA / BFM derivatives all
+  excluded).
+- ICAO §3.2 perturbation gallery PDF
+  (`notebooks/icao_perturbation_gallery_v051.pdf`) regenerated; 22
+  pages, no remaining "wrong-direction" or "obvious artifact" cases
+  on the seed=42 VGGFace2 fixture set.
+
 ## [0.5.1] - 2026-05-02
 
 Patch release: parity-driven operator fixes for the 6 components that

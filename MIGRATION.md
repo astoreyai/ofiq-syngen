@@ -1,5 +1,33 @@
 # Migration guide
 
+## v0.5.1 → v0.5.2
+
+Patch release. No public-API changes; pixel output of 11 operators
+shifted to fix visual artifacts surfaced by the ICAO §3.2 perturbation
+gallery review on VGGFace2 fixtures. If you have parity vectors pinned
+against v0.5.1 output, regenerate them; the OFIQ-binary scalars are
+stable but the underlying pixels differ.
+
+Operators with changed pixel output:
+- **Crop / Margin (4 ops)**: `BORDER_REFLECT` mirror-fill instead of
+  flat brown rectangle
+- **InterEyeDistance**: scale floor 0.30 → 0.45; padding now blurs
+  the source as soft backdrop instead of flat color or kaleidoscope
+- **OverExposurePrevention**: input pre-clipped to [4, 245] before
+  gamma to prevent JPEG-noise rainbow stippling
+- **EyesOpen**: lash-line darkening 0.18 → 0.06 (no more pink stripe)
+- **Sharpness**: max sigma 10.5 → 6.5 (face stays recognizable)
+- **HeadPoseYaw / Pitch**: 2D perspective squeeze 0.40 → 0.50
+- **RadialDistortion**: vignette floor 0.25 → 0.55
+- **ExpressionNeutrality**: surprise template halved (no tooth-on-chin
+  artifact); fallback path uses anatomical anchors
+- **MouthOcclusionPrevention**: redesigned mask polygon shape
+- **NaturalColour**: LAB shift cap 50 → 30
+- **CompressionArtifacts**: cascade chroma cap 32 → 8, JPEG floor
+  3 → 8, passes 4 → 2
+
+OFIQ-binary parity manifest regenerated; all 245 vectors still pass.
+
 ## v0.4.x → v0.5.0
 
 ### What's new

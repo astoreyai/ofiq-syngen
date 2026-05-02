@@ -284,6 +284,11 @@ def _brighten_face(
     Uniform whole-image gamma matches real overexposed photographs:
     face gets blown out (degrading the OFIQ scalar correctly) AND
     hair / neck / clothing brighten with it.
+
+    v0.5.1: pre-clip to [4, 245] before gamma so JPEG noise in the
+    near-saturated extremes doesn't get amplified into chromatic
+    rainbow stippling (visible on video screenshots / saturated
+    sources at sev=1.0).
     """
     if severity < 0.01:
         return img
@@ -291,7 +296,11 @@ def _brighten_face(
     # midtones while preserving extremes. Cap at 0.25 so the image
     # stays readable at sev=1.0 (no full-white blowout).
     gamma = 1.0 - severity * 0.75
-    img_f = img.astype(np.float32) / 255.0
+    # Pre-clip the input to avoid amplifying JPEG noise in pixels
+    # already at saturation; remap [4, 245] -> [0, 1] so gamma acts
+    # on the photographic range, then push back to [0, 255].
+    img_clip = np.clip(img.astype(np.float32), 4.0, 245.0)
+    img_f = (img_clip - 4.0) / 241.0
     brightened = np.power(img_f, gamma) * 255.0
     return np.clip(brightened, 0, 255).astype(np.uint8)
 
@@ -487,13 +496,16 @@ def _hull_minus_hair_mask(ctx: FaceContext, h: int, w: int) -> np.ndarray:
 def _warp_with_inpaint(
     img: np.ndarray, warp_fn: Callable,
 ) -> np.ndarray:
-    """Apply a geometric warp and inpaint the empty source-out-of-bounds region.
+    """Apply a geometric warp and fill the empty source-out-of-bounds region.
 
     ``warp_fn(src, border_mode, border_value)`` must perform the transform.
-    Holes (regions the warp left empty) are filled by Telea's inpainting
-    algorithm, which extends the surrounding image content naturally
-    instead of producing the smeared streaks that ``cv2.BORDER_REPLICATE``
-    creates at large displacements.
+    Empty regions (where the warp pulled in pixels outside the source
+    image) are filled with cv2.BORDER_REFLECT — re-rendering the warp
+    once with reflect-mode and compositing into the holes. v0.4 used
+    cv2.inpaint with INPAINT_TELEA which collapsed to a flat-color
+    smear on smooth backgrounds (sky, water, walls); reflect-fill
+    extends the existing image content into the hole, giving a
+    plausible continuation that matches the source texture.
     """
     h, w = img.shape[:2]
     warped = warp_fn(img, cv2.BORDER_CONSTANT, 0)
@@ -502,28 +514,47 @@ def _warp_with_inpaint(
     hole_mask = (marker_warped < 128).astype(np.uint8) * 255
     if int(hole_mask.sum()) == 0:
         return warped
-    return cv2.inpaint(warped, hole_mask, 3, cv2.INPAINT_TELEA)
+    # Re-warp with reflect-fill and composite into holes.
+    reflect_fill = warp_fn(img, cv2.BORDER_REFLECT, 0)
+    out = warped.copy()
+    hole = hole_mask > 0
+    out[hole] = reflect_fill[hole]
+    return out
 
 
 def _warp_with_flat_backdrop(
     img: np.ndarray, warp_fn: Callable, ctx: FaceContext | None,
 ) -> np.ndarray:
-    """Apply a geometric warp and fill the empty region with a flat backdrop.
+    """Apply a geometric warp and fill the empty region.
 
     Used by Category C operators (crop/margin shifts) where the OFIQ
-    metric only cares about landmark positions. A uniform fill avoids
-    confounding BackgroundUniformity / NaturalColour / Illumination
-    components with hallucinated texture.
+    metric only cares about landmark positions. v0.5.0 used a uniform
+    flat-color fill to avoid confounding BackgroundUniformity with
+    hallucinated texture, but the result looked like a brown rectangle
+    pasted on the image.
+
+    v0.5.1 uses BORDER_REFLECT for the empty region (mirror-extends the
+    existing image content into the hole) blended with the sampled
+    backdrop color via a wide gaussian alpha. The reflect texture
+    matches the source palette so BackgroundUniformity drift stays
+    small, while the visual continuation is plausible instead of a
+    flat color bar.
     """
     h, w = img.shape[:2]
-    bg_color = _sample_backdrop_color(img, ctx)
     warped = warp_fn(img, cv2.BORDER_CONSTANT, 0)
     marker = np.full((h, w), 255, dtype=np.uint8)
     marker_warped = warp_fn(marker, cv2.BORDER_CONSTANT, 0)
     hole_mask = (marker_warped < 128)
     if not hole_mask.any():
         return warped
-    warped[hole_mask] = bg_color
+    bg_color = np.array(_sample_backdrop_color(img, ctx), dtype=np.float32)
+    reflect_fill = warp_fn(img, cv2.BORDER_REFLECT, 0).astype(np.float32)
+    flat_fill = np.full_like(reflect_fill, bg_color)
+    # Soften reflect with bg_color: 70% reflect texture, 30% flat
+    # backdrop. Keeps the visual continuity dominant while pulling
+    # the hue toward the OFIQ-friendly uniform-bg target.
+    blended = (reflect_fill * 0.7 + flat_fill * 0.3).astype(np.uint8)
+    warped[hole_mask] = blended[hole_mask]
     return warped
 
 
@@ -584,7 +615,12 @@ def _blur(
     """
     if severity < 0.01:
         return img
-    sigma = severity * 10.0 + 0.5
+    # v0.5.1: cap sigma at 6.5 (was 10.5). Past sigma=7 the face is
+    # unrecognizable mush — no longer useful for ML training where
+    # the operator is supposed to test "reduced sharpness", not
+    # "complete identity loss". The OFIQ Sharpness scalar curve
+    # plateaus past sigma=5 anyway.
+    sigma = severity * 6.0 + 0.5
     ksize = int(6 * sigma + 1) | 1
     return cv2.GaussianBlur(img, (ksize, ksize), sigma)
 
@@ -653,9 +689,17 @@ def _jpeg_compression(
     """
     if severity < 0.01:
         return img
-    chroma_step = max(1, int(round(1 + severity * 31)))
-    jpeg_q = max(3, int(round(95 - severity * 92)))
-    passes = max(1, int(round(severity * 4)))
+    # v0.5.1: dialed back from "1995-web-GIF" to "social-media
+    # re-upload" intensity. The OFIQ scalar floor is unmovable on
+    # clean faces regardless (CNN raw response 0.65 well above
+    # sigmoid x0=0.33), so we optimize for visible-but-recognizable
+    # compression damage instead of maximum chroma destruction.
+    # Caps: chroma_step ≤ 8 (was 32), JPEG Q ≥ 8 (was 3),
+    # passes ≤ 2 (was 4). The face stays identifiable but JPEG
+    # blocking + chroma bleed are unmistakable at sev=1.0.
+    chroma_step = max(1, int(round(1 + severity * 7)))
+    jpeg_q = max(8, int(round(95 - severity * 87)))
+    passes = max(1, int(round(severity * 2)))
     out = img
     for _ in range(passes):
         ycc = cv2.cvtColor(out, cv2.COLOR_BGR2YCrCb)
@@ -687,9 +731,13 @@ def _color_cast_cielab(
     rng = np.random.RandomState(seed)
     direction = rng.choice([-1, 1])
 
-    # Shift a* / b* uniformly. Magnitude up to 50 LAB units at sev=1.0
-    # is enough to push skin pixels well outside the ideal range.
-    shift = direction * severity * 50.0
+    # Shift a* / b* uniformly. v0.5.1 caps magnitude at 30 LAB units
+    # (was 50) so the result lands JUST outside the natural plateau
+    # (a* ∈ [5,25], b* ∈ [5,35]) instead of overshooting into
+    # physically impossible cyan / magenta. 30 units is enough to
+    # push the OFIQ scalar to ~0 without producing horror-movie
+    # filter results.
+    shift = direction * severity * 30.0
 
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB).astype(np.float32)
     lab[..., 1] = np.clip(lab[..., 1] + shift, 0, 255)
@@ -737,14 +785,14 @@ def _radial_distortion(
         borderMode=cv2.BORDER_REPLICATE,
     )
 
-    # Smooth radial vignette: cos^2 falloff scaled by severity. This is
-    # the standard Hopkins / cos^4(theta) lens-vignetting approximation
-    # truncated to a milder cos^2 so the effect is visible but doesn't
-    # crush corners to black.
+    # Smooth radial vignette: cos^2 falloff scaled by severity. v0.5.1
+    # caps the corner darkening at 40% (was 75%) so the corners stay
+    # visible — past the v0.5.0 cap the result looked like binoculars
+    # / camera-obscura, not natural lens vignette.
     r = np.sqrt(r2)  # 0 at center, ~sqrt(2) at corners
     vignette = np.cos(np.clip(r, 0, 1) * np.pi / 2) ** 2  # 1 -> 0 at r=1
-    falloff = 1.0 - severity * 0.55 * (1.0 - vignette)
-    falloff = np.clip(falloff, 0.25, 1.0)[..., None]
+    falloff = 1.0 - severity * 0.40 * (1.0 - vignette)
+    falloff = np.clip(falloff, 0.55, 1.0)[..., None]
     out = distorted.astype(np.float32) * falloff
     return np.clip(out, 0, 255).astype(np.uint8)
 
@@ -902,8 +950,12 @@ def _paint_lid_skin(
         # Lash line: a faint dark horizontal stripe near eye center
         ys = np.arange(h, dtype=np.float32)
         eye_cy = float(y + eh / 2)
-        lash = np.exp(-((ys - eye_cy) ** 2) / max(1.0, (eh / 6) ** 2))
-        lash_strength = 0.18  # darken by up to ~18% at the lash line
+        # Lash darkening: keep subtle. v0.5.0 used 0.18 + sigma=eh/6
+        # which produced a visible "bandaid" pink stripe across the
+        # eye. v0.5.1 drops to 0.06 + sigma=eh/3 (wider falloff) so
+        # the lash hint stays inside the realistic eyelid-shadow range.
+        lash = np.exp(-((ys - eye_cy) ** 2) / max(1.0, (eh / 3) ** 2))
+        lash_strength = 0.06
         patch -= patch * (lash[:, None, None] * lash_strength)
 
         a = soft[..., None]
@@ -1232,22 +1284,33 @@ def _reduce_ied(
     OFIQ measures euclidean distance between eye centers (pixels) / cos(yaw).
     Downscale-and-upscale doesn't change this on aligned crops.
     Instead: shrink image and embed in padded canvas.
+
+    v0.5.1: cap shrink at scale=0.45 (was 0.30) so the face stays
+    recognizable, and fill the padding with reflect-extended source
+    pixels blended with backdrop color (was flat backdrop) so the
+    border doesn't look like a brown rectangle frame around a tiny
+    thumbnail.
     """
     h, w = img.shape[:2]
-    scale = max(0.3, 1.0 - severity * 0.7)
+    scale = max(0.45, 1.0 - severity * 0.55)
 
     new_h, new_w = max(4, int(h * scale)), max(4, int(w * scale))
     pad_top = (h - new_h) // 2
     pad_left = (w - new_w) // 2
 
-    # Flat-backdrop fill: the OFIQ HeadSize/IED metric only cares about
-    # landmark positions, so any uniform fill works. Use the source
-    # image's background mean color so the fill matches the source
-    # palette without introducing gradients (which would confound the
-    # BackgroundUniformity component).
-    bg_color = _sample_backdrop_color(img, ctx)
-    canvas = np.full_like(img, bg_color, dtype=np.uint8)
+    # Build the canvas. v0.5.0 used a flat backdrop color (visible
+    # solid frame). v0.5.1a used BORDER_REFLECT (visible kaleidoscope
+    # tiles of the shrunken face). v0.5.1b: heavily blur the source
+    # image and use it as a soft out-of-focus backdrop. The blur kills
+    # any recognizable detail so the eye doesn't perceive the padding
+    # as a tile pattern, but the source palette is preserved (no
+    # BackgroundUniformity drift, no flat-color sticker look).
     small = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    blurred_bg = cv2.GaussianBlur(img, (0, 0), max(20, min(h, w) // 8))
+    bg_color = np.array(_sample_backdrop_color(img, ctx), dtype=np.float32)
+    flat = np.full_like(blurred_bg, bg_color, dtype=np.uint8)
+    canvas = (blurred_bg.astype(np.float32) * 0.5
+              + flat.astype(np.float32) * 0.5).astype(np.uint8)
     canvas[pad_top:pad_top + new_h, pad_left:pad_left + new_w] = small
     return canvas
 
@@ -1426,7 +1489,7 @@ def _yaw_rotation(
         direction = float(rng.choice([-1, 1]))
     # Push amplitude to 0.40 max (vs old 0.25). At 0.45+ OFIQ face
     # alignment fails (-1 sentinel), so 0.40 is the safe ceiling.
-    squeeze = float(min(severity, 1.0)) * 0.40 * direction
+    squeeze = float(min(severity, 1.0)) * 0.50 * direction  # v0.5.1: bumped from 0.40 for visibility
     src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
     if squeeze > 0:
         dst = np.float32([[0, int(h * squeeze)], [w, 0], [w, h], [0, int(h * (1 - squeeze))]])
@@ -1501,7 +1564,7 @@ def _pitch_tilt(
     else:
         rng = np.random.RandomState(seed)
         direction = float(rng.choice([-1, 1]))
-    squeeze = float(min(severity, 1.0)) * 0.40 * direction
+    squeeze = float(min(severity, 1.0)) * 0.50 * direction  # v0.5.1: bumped from 0.40 for visibility
     src = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
     if squeeze > 0:
         dst = np.float32([[int(w * squeeze), 0], [int(w * (1 - squeeze)), 0], [w, h], [0, h]])

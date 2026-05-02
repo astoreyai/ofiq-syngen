@@ -202,9 +202,12 @@ def _apply_3dmm_expression(
     t = ctx.t_metric
     warped = _apply_rbf_warp(img, src_pts, dst_pts, seed)
 
-    # Region-constrained composite: hull of BOTH original AND warped
-    # mouth landmarks (so the mask covers both positions without
-    # over-dilating into cheeks/jaw). Small fixed dilation buffer.
+    # v0.5.1: tighten composite. v0.5.0 dilated the union mouth hull
+    # by ~22px and softened with sigma=t/35, producing visible
+    # warped-tooth artifacts at the chin when the TPS pushed the
+    # mouth far below source position. Cap dilation at 8px and drop
+    # the soft sigma to t/80 so the composite stays inside the actual
+    # lip region.
     mouth_idx = MOUTH_OUTER
     src_mouth = ctx.landmarks_98[mouth_idx].astype(np.int32)
     dst_mouth = dst_pts[mouth_idx].astype(np.int32)
@@ -212,12 +215,10 @@ def _apply_3dmm_expression(
     mouth_mask = np.zeros((h, w), dtype=np.uint8)
     hull = cv2.convexHull(union_pts)
     cv2.fillConvexPoly(mouth_mask, hull, 1)
-    # Small dilation - tight to lip contour so cheek/jaw distortion
-    # from the TPS warp stays outside the composite.
-    dilate_px = max(6, int(t * 0.08 + 6))
+    dilate_px = max(4, min(8, int(t * 0.02 + 4)))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dilate_px, dilate_px))
     mouth_mask = cv2.dilate(mouth_mask, kernel)
-    soft = cv2.GaussianBlur(mouth_mask.astype(np.float32), (0, 0), max(3.0, t / 35))
+    soft = cv2.GaussianBlur(mouth_mask.astype(np.float32), (0, 0), max(1.5, t / 80))
     soft = np.clip(soft, 0.0, 1.0)[..., None]
     out = img.astype(np.float32) * (1 - soft) + warped.astype(np.float32) * soft
     return np.clip(out, 0, 255).astype(np.uint8)
@@ -231,46 +232,72 @@ def _fallback_warp(
     Uses hand-picked ADNet landmark displacement instead of 3DMM
     reprojection. Same TPS + mouth-region composite as the main path.
     """
-    import cv2
     from ofiq_syngen.components import _apply_rbf_warp
-    from ofiq_syngen.landmark_utils import MOUTH_OUTER
 
     landmarks = ctx.landmarks_98.astype(np.float64)
     t = ctx.t_metric
     h, w = img.shape[:2]
 
-    src_points = landmarks.copy()
-    dst_points = landmarks.copy()
-
     s_eff = float(np.sqrt(np.clip(severity, 0.0, 1.0)))
-    displacement = s_eff * t * 0.18
+    # v0.5.1: dropped from 0.18 to 0.10. The TPS warp was displacing
+    # mouth landmarks 36px at sev=1.0 (t≈200) which interpolated into
+    # a visible chin-area artifact even with corner anchors.
+    displacement = s_eff * t * 0.10
 
+    # Restrict the warp's source/destination to MOUTH points only
+    # (mouth corners + outer + inner) and pass the surrounding
+    # anatomical landmarks (chin, jaw, nose tip, eye corners,
+    # eyebrows) as ANCHORS that map to themselves. This forces the
+    # TPS interpolation to localize near the mouth instead of bleeding
+    # into the chin / jaw.
+    mouth_indices = [76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+                     88, 89, 90, 91, 92, 93, 94, 95]
+    anchor_indices = [
+        16,  # chin
+        0, 8, 16, 24, 32,  # jaw outline (sparse)
+        54,  # nose tip
+        51, 57,  # nose base sides
+        60, 64, 68, 72,  # eye corners
+        33, 38, 42, 46, 50,  # eyebrows (sparse)
+    ]
+    # Build src/dst arrays: mouth points get displaced, anchors stay put
+    src_points = []
+    dst_points = []
+    for idx in mouth_indices:
+        src_points.append(landmarks[idx].copy())
+        dst_points.append(landmarks[idx].copy())
     if emotion == "smile":
-        for idx in [76, 82]:
-            dst_points[idx, 1] -= displacement
-        for idx in [77, 78, 86, 87]:
-            dst_points[idx, 1] -= displacement * 0.4
+        for i, idx in enumerate(mouth_indices):
+            if idx in (76, 82):
+                dst_points[i][1] -= displacement
+            elif idx in (77, 78, 86, 87):
+                dst_points[i][1] -= displacement * 0.4
     elif emotion == "frown":
-        for idx in [76, 82]:
-            dst_points[idx, 1] += displacement
-        for idx in [77, 78, 86, 87]:
-            dst_points[idx, 1] += displacement * 0.4
+        for i, idx in enumerate(mouth_indices):
+            if idx in (76, 82):
+                dst_points[i][1] += displacement
+            elif idx in (77, 78, 86, 87):
+                dst_points[i][1] += displacement * 0.4
     else:  # surprise
-        for idx in [88, 89, 90, 91]:
-            dst_points[idx, 1] -= displacement * 0.6
-        for idx in [92, 93, 94, 95]:
-            dst_points[idx, 1] += displacement * 0.6
+        for i, idx in enumerate(mouth_indices):
+            if idx in (88, 89, 90, 91):
+                dst_points[i][1] -= displacement * 0.6
+            elif idx in (92, 93, 94, 95):
+                dst_points[i][1] += displacement * 0.6
+    # Anchors map to themselves
+    for idx in anchor_indices:
+        src_points.append(landmarks[idx].copy())
+        dst_points.append(landmarks[idx].copy())
+    src_points = np.array(src_points, dtype=np.float64)
+    dst_points = np.array(dst_points, dtype=np.float64)
 
     warped = _apply_rbf_warp(img, src_points, dst_points, seed)
 
-    mouth_pts = ctx.landmarks_98[MOUTH_OUTER].astype(np.int32)
-    mouth_mask = np.zeros((h, w), dtype=np.uint8)
-    hull = cv2.convexHull(mouth_pts)
-    cv2.fillConvexPoly(mouth_mask, hull, 1)
-    dilate_px = max(8, int(t * 0.35 * s_eff + 10))
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dilate_px, dilate_px))
-    mouth_mask = cv2.dilate(mouth_mask, kernel)
-    soft = cv2.GaussianBlur(mouth_mask.astype(np.float32), (0, 0), max(4.0, t / 25))
-    soft = np.clip(soft, 0.0, 1.0)[..., None]
-    out = img.astype(np.float32) * (1 - soft) + warped.astype(np.float32) * soft
-    return np.clip(out, 0, 255).astype(np.uint8)
+    # v0.5.1c: with anchor-pinned TPS, the warp is already localized
+    # to the mouth — areas outside the mouth-anchor convex hull
+    # should be near-pixel-identical to the source. Skip the soft
+    # mouth-mask composite entirely; the previous composite produced
+    # a "chin ghost" artifact at the soft-blend boundary even with
+    # tiny dilation, because sub-pixel warp interpolation differed
+    # from the source through the alpha gradient.
+    return warped

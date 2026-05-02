@@ -169,10 +169,16 @@ def expression_delta(
     # the template values are scaled per-mode to give comparable visible
     # impact across emotions. Mouth-corner movement at sev=1.0 is ~10-12 px
     # which matches a moderate smile/frown anatomically.
+    # v0.5.1: surprise mode-0 (jaw open) reduced from 8 -> 4. The
+    # original magnitude pushed mouth landmarks ~25px down at sev=1.0,
+    # which dragged the source's white teeth pixels onto the chin via
+    # the TPS warp + soft-mask composite. Halving keeps the expression
+    # change visible (~12px max landmark displacement) without producing
+    # the "tooth-on-chin" artifact.
     templates = {
         "smile":    np.array([ 0.0,   8.0,  0.0,  0.0,  0.0,   5.0,  0.0,  0.0,  0.0,  0.0]),
         "frown":    np.array([ 0.0,  -6.0,  0.0,  0.0,  0.0,  -3.0,  5.0,  0.0,  0.0,  0.0]),
-        "surprise": np.array([ 8.0,   2.0,  6.0,  0.0,  5.0,   0.0,  0.0,  0.0,  0.0,  0.0]),
+        "surprise": np.array([ 4.0,   1.0,  3.0,  0.0,  2.5,   0.0,  0.0,  0.0,  0.0,  0.0]),
         "disgust":  np.array([ 0.0,  -3.0, -5.0,  6.0,  0.0,   0.0,  3.0,  0.0,  0.0,  0.0]),
     }
     if emotion not in templates:

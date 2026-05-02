@@ -201,37 +201,76 @@ def render_surgical_mask(img: np.ndarray, ctx: FaceContext, severity: float,
         ctx.eye_midpoint[1] - (mouth_left[1] + mouth_right[1]) / 2,
     )
 
-    # Top of mask: from nose region (severity scales upward)
-    top_y = int(nose_tip[1] - eye_mouth_dist * 0.4 * severity)
-    bottom_y = int(chin[1] + eye_mouth_dist * 0.15)
+    # v0.5.1: redesigned mask polygon. v0.5.0 produced a "paper
+    # airplane" wedge — narrow at the chin, peaked at the nose-
+    # bridge — because the polygon clipped to landmarks within
+    # [top_y, bottom_y] and added a sin-peak at the top. Real
+    # surgical masks are shaped like a rounded rectangle that
+    # extends past the jaw line at the cheeks. Build that shape
+    # parametrically from nose / chin / mouth-corner anchors.
+    top_y = int(nose_tip[1] - eye_mouth_dist * 0.30 * severity)
+    bottom_y = int(chin[1] + eye_mouth_dist * 0.20)
+    mid_y = (top_y + bottom_y) // 2
+    # Width: extend past mouth corners by 60% of eye-mouth distance
+    extend = int(eye_mouth_dist * 0.6)
+    left_x = int(mouth_left[0] - extend)
+    right_x = int(mouth_right[0] + extend)
 
-    # Use jaw landmarks 0-32 for sides
-    jaw_x_left = int(min(landmarks[0:8, 0].min(), mouth_left[0]) - 5)
-    jaw_x_right = int(max(landmarks[25:33, 0].max(), mouth_right[0]) + 5)
+    # Build a rounded-rectangle polygon. Use 60 points around the
+    # perimeter for a smooth curve.
+    pts = []
+    # Top edge with subtle nose-bridge indent (a small downward
+    # bump at center, NOT the v0.5.0 peak which made the mask look
+    # pointed).
+    for i in range(20):
+        t = i / 19.0
+        x = int(left_x + (right_x - left_x) * t)
+        # Faint downward bump where the nose-bridge wire would sit
+        bump = -math.sin(t * math.pi) * eye_mouth_dist * 0.02
+        y = int(top_y - bump)
+        pts.append([x, y])
+    # Right cheek curve (rounds outward then down)
+    for i in range(10):
+        t = i / 9.0
+        # Bezier-like outward bulge: x extends by 10% of half-width,
+        # y descends from top to mid.
+        x = int(right_x + math.sin(t * math.pi / 2) * eye_mouth_dist * 0.08)
+        y = int(top_y + (mid_y - top_y) * t)
+        pts.append([x, y])
+    # Right cheek to chin curve
+    for i in range(10):
+        t = i / 9.0
+        x = int(right_x + math.sin(math.pi / 2) * eye_mouth_dist * 0.08
+                - math.sin(t * math.pi / 2) * eye_mouth_dist * 0.08
+                - (right_x - chin[0]) * t * 0.4)
+        y = int(mid_y + (bottom_y - mid_y) * t)
+        pts.append([x, y])
+    # Bottom curve under chin
+    for i in range(20):
+        t = i / 19.0
+        # Mirror x from right-of-chin to left-of-chin, with a
+        # slight downward bow under the chin.
+        x_left_anchor = int(left_x + (chin[0] - left_x) * 0.4)
+        x_right_anchor = int(right_x - (right_x - chin[0]) * 0.4)
+        x = int(x_right_anchor + (x_left_anchor - x_right_anchor) * t)
+        bow = math.sin(t * math.pi) * eye_mouth_dist * 0.03
+        y = int(bottom_y + bow)
+        pts.append([x, y])
+    # Left chin to cheek
+    for i in range(10):
+        t = i / 9.0
+        x_left_anchor = int(left_x + (chin[0] - left_x) * 0.4)
+        x = int(x_left_anchor - (x_left_anchor - left_x) * t)
+        y = int(bottom_y - (bottom_y - mid_y) * t)
+        pts.append([x, y])
+    # Left cheek up to top
+    for i in range(10):
+        t = i / 9.0
+        x = int(left_x + math.sin((1 - t) * math.pi / 2) * eye_mouth_dist * 0.08)
+        y = int(mid_y - (mid_y - top_y) * t)
+        pts.append([x, y])
 
-    # Build mask polygon from nose-bridge across to ears, down jaw line
-    poly_points = []
-    # Top edge: arc from upper-left across nose to upper-right
-    n_top = 12
-    for i in range(n_top):
-        t = i / (n_top - 1)
-        x = int(jaw_x_left + (jaw_x_right - jaw_x_left) * t)
-        # Slight downward dip in middle for nose contour
-        dip = math.sin(t * math.pi) * eye_mouth_dist * 0.05
-        y = int(top_y - dip)
-        poly_points.append([x, y])
-    # Right side down to jaw bottom
-    for i in range(8, 33):
-        if landmarks[i, 1] >= top_y and landmarks[i, 1] <= bottom_y:
-            poly_points.append([int(landmarks[i, 0]), int(landmarks[i, 1])])
-    # Bottom: chin
-    poly_points.append([int(chin[0]), int(bottom_y)])
-    # Left side back up
-    for i in range(7, -1, -1):
-        if landmarks[i, 1] >= top_y and landmarks[i, 1] <= bottom_y:
-            poly_points.append([int(landmarks[i, 0]), int(landmarks[i, 1])])
-
-    poly = np.array(poly_points, dtype=np.int32)
+    poly = np.array(pts, dtype=np.int32)
     mask_2d = np.zeros((h, w), dtype=np.uint8)
     cv2.fillPoly(mask_2d, [poly], 1)
 

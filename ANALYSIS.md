@@ -66,9 +66,9 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | Proportion of pixels with luminance in [247, 255] within face mask. Mapped: 1/(ratio + 0.01), clamped to [0,100]. | Multiplicative brightening (factor 1.0 → 3.5) within face mask. |
-| **Analyses / Perturbs** | **Face landmark mask**: counts bright pixels (lum 247–255). | **Face mask**: Same `ctx.face_mask`. Brightening pushes pixels into saturation (247–255 range). |
-| **Alignment** | **EXCELLENT**. Same mask. Brightening directly increases the proportion of saturated pixels OFIQ counts. |
+| **Algorithm** | Proportion of pixels with luminance in [247, 255] within face mask. Mapped: 1/(ratio + 0.01), clamped to [0,100]. | v0.5.2: whole-image gamma brightening with input pre-clipped to [4, 245] before the gamma curve. v0.5.0/.1 used raw `gamma(img/255)` which amplified JPEG noise in saturated pixels into rainbow chromatic stippling at sev=1.0 on video-screenshot sources. The pre-clip remaps [4, 245] → [0, 1] so the gamma curve operates on the photographic range only; saturated extremes are kept clean. |
+| **Analyses / Perturbs** | **Face landmark mask**: counts bright pixels (lum 247–255). | **Whole image** (gamma applies uniformly). |
+| **Alignment** | **EXCELLENT** (visible) + **GOOD** (scalar). Whole-image gamma matches real overexposed photographs. The scalar moves correctly when the face starts with enough headroom; saturated sources may not cross the >247 threshold even at full gamma. |
 
 ### §7.3.7 DynamicRange
 
@@ -98,16 +98,16 @@ C++ source at `OFIQ-Project/OFIQlib/modules/measures/src/`.
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | Custom sRGB → CIELAB conversion (D50 illuminant, not cv2.cvtColor). Mean a\* and b\* computed from concatenated left + right ROI regions (same zones as IlluminationUniformity). Score = sqrt(max(max(0, 5−a\*), a\*−25)² + max(max(0, 5−b\*), b\*−35)²). Natural skin: a\* ∈ [5,25], b\* ∈ [5,35]. Sigmoid: h=200, x0=0, w=10. | CIELAB a\*/b\* channel shift (±60 per channel) within the two ROI zones. Pushes chromaticity outside [5,25]/[5,35]. |
-| **Analyses / Perturbs** | **Left and right ROI zones** (same as IlluminationUniformity): landmark-derived zoneSize = int(IED × 0.3) squares positioned below each eye center. ROIs concatenated, converted to CIELAB. | **Left and right ROI zones**: Same `ctx.left_roi` / `ctx.right_roi`. Converts to LAB, shifts a\*/b\* channels, converts back. Applied within face-masked ROI. |
-| **Alignment** | **GOOD**. Same ROI zones. LAB shift directly pushes mean a\*/b\* outside the natural range OFIQ measures. Minor mismatch: syngen uses cv2 LAB conversion, OFIQ uses custom sRGB→CIELAB with D50 illuminant and different matrix coefficients. The direction of effect is correct, magnitude may differ slightly. |
+| **Algorithm** | Custom sRGB → CIELAB conversion (D50 illuminant, not cv2.cvtColor). Mean a\* and b\* computed from concatenated left + right ROI regions. Score = sqrt(max(max(0, 5−a\*), a\*−25)² + max(max(0, 5−b\*), b\*−35)²). Natural skin: a\* ∈ [5,25], b\* ∈ [5,35]. | v0.5.2: global CIELAB a\*/b\* channel shift, magnitude up to 30 LAB units at sev=1.0 (was 50 in v0.5.1). The smaller cap lands JUST outside the natural plateau instead of overshooting into physically impossible cyan / magenta horror-filter territory. |
+| **Analyses / Perturbs** | **Left and right ROI zones**: landmark-derived zoneSize = int(IED × 0.3) squares positioned below each eye center. | **Whole image** (LAB shift applies uniformly; the OFIQ ROI sub-region is a strict subset). |
+| **Alignment** | **GOOD**. LAB shift directly pushes mean a\*/b\* outside the natural range. Minor mismatch: syngen uses cv2 LAB conversion, OFIQ uses custom sRGB→CIELAB with D50 illuminant. Direction of effect is correct, magnitude may differ slightly. |
 
 ### Annex D.2.1 RadialDistortion (no QAA in IS:2025)
 
 | | OFIQ | Syngen |
 |---|---|---|
-| **Algorithm** | Not measured in the current OFIQ deployment for this project (no entry in `OFIQ_COMPONENTS`). ISO 29794-5 Section 6.9 specifies deviation from rectilinear projection. | Barrel distortion via radial coefficient k (0 → 0.5). Uses cv2.remap with `scale = 1 + k × r²`. |
-| **Analyses / Perturbs** | — | **Whole image**: radially symmetric distortion centered on image center. |
+| **Algorithm** | Not measured in the current OFIQ deployment for this project. ISO 29794-5 Section 6.9 specifies deviation from rectilinear projection. | Barrel distortion via radial coefficient k (0 → 0.5) + smooth radial vignette (cos² falloff). v0.5.2 caps the vignette darkening at 40% (was 75% in v0.5.1) with a floor of 0.55 — corners stay visible instead of crushing to black. |
+| **Analyses / Perturbs** | — | **Whole image**: radially symmetric distortion centered on image center, with milder lens-vignetting. |
 | **Alignment** | **N/A**. Forward-looking implementation for an ISO 29794-5 quality requirement listed in FDIS Annex D.2.1 with no QAA in IS:2025. Not currently scored by OFIQ. |
 
 ---
