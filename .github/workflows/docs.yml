@@ -25,7 +25,13 @@ jobs:
           pip install -e .
           pip install mkdocs mkdocs-material mkdocstrings[python] mkdocs-include-markdown-plugin
       - name: Build site
-        run: mkdocs build --strict
+        # Not --strict: gallery strip PNGs are intentionally gitignored
+        # (26 MB; regenerable locally via scripts/regenerate_gallery.py
+        # from a face image that is itself license-restricted). The CI
+        # build keeps the gallery markdown pages with broken image
+        # links so users see the gallery structure; local builds with
+        # the strips populated render the actual images.
+        run: mkdocs build
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
